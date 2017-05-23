@@ -17,7 +17,7 @@
             android:text="Hello World!"/>
 
     <CheckBox
-        android:text="PUSH"
+        android:text="xdxf"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/checkBox"
