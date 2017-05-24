@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app=""
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="1">
+
+    <TextView
+        android:text="@string/app_name"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:id="@+id/title"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textAlignment="center"
+        android:layout_weight="0.01"
+        android:textSize="25sp"
+        android:gravity="center_vertical"
+        android:layout_marginTop="50dp" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:ems="10"
+        android:id="@+id/editText"
+        android:layout_weight="0.01"
+        android:layout_marginTop="50dp"
+        android:layout_marginBottom="50dp"
+        android:hint="校园卡账号"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:background="@android:drawable/spinner_background" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPassword"
+        android:ems="10"
+        android:id="@+id/editText2"
+        android:layout_weight="0.01"
+        android:layout_marginLeft="30dp"
+        android:hint="密码"
+        android:layout_marginRight="30dp"
+        android:background="@android:drawable/spinner_background" />
+
+    <Button
+        android:text="@string/login"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/button2"
+        android:layout_weight="0.01"
+        android:layout_marginLeft="80dp"
+        android:layout_marginRight="80dp"
+        android:layout_marginTop="50dp"
+        android:background="?android:attr/colorPrimary"
+        android:textSize="20sp"
+        android:textColor="@android:color/background_light" />
+</LinearLayout>
