@@ -10,6 +10,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.edu.szu.szuschedule.adapter.ViewPagerAdapter;
 import cn.edu.szu.szuschedule.fragment.TestFragment;
+import cn.edu.szu.szuschedule.fragment.UserFragment;
 
 public class MainActivity extends AppCompatActivity implements ViewPager.OnPageChangeListener {
     @Bind(R.id.viewPager)
@@ -78,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
         adapter.addFragment(TestFragment.newInstance("主页页面"));
         adapter.addFragment(TestFragment.newInstance("日历页面"));
-        adapter.addFragment(TestFragment.newInstance("用户页面"));
+        adapter.addFragment(new UserFragment());
         viewPager.setAdapter(adapter);
     }
 }

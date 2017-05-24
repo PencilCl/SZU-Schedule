@@ -46,12 +46,12 @@
         android:text="@string/login"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/button2"
+        android:id="@+id/loginButton"
         android:layout_weight="0.01"
         android:layout_marginLeft="80dp"
         android:layout_marginRight="80dp"
         android:layout_marginTop="50dp"
-        android:background="?android:attr/colorPrimary"
+        android:background="@color/colorPrimary"
         android:textSize="20sp"
         android:textColor="@android:color/background_light" />
 </LinearLayout>
