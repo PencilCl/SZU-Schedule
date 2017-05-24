@@ -4,4 +4,7 @@
     <string name="login_out">退出登录</string>
     <string name="about_us">关于我们</string>
 
+    <string name="bottom_navigation_home">主页</string>
+    <string name="bottom_navigation_time">日程</string>
+    <string name="bottom_navigation_user">用户</string>
 </resources>
