@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+    <TableLayout
+            android:id="@+id/tableLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stretchColumns="*" android:padding="5dp" android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true">
+
+        <TableRow android:layout_width="match_parent" android:layout_height="match_parent"
+        >
+            <cn.edu.szu.szuschedule.view.SquareButton
+                    android:id="@+id/blackboard"
+                    android:text="@string/module_blackboard"
+                    android:layout_width="1dp"
+                    android:textAllCaps="false" android:background="@drawable/button_bb_bg"
+                    android:layout_margin="10dp"
+                    android:textColor="@android:color/white"/>
+            <cn.edu.szu.szuschedule.view.SquareButton
+                    android:id="@+id/book"
+                    android:text="@string/module_book"
+                    android:layout_width="1dp" android:layout_margin="10dp"
+                    android:background="@drawable/button_book_bg"
+                    android:textColor="@android:color/white"/>
+        </TableRow>
+        <TableRow android:layout_width="match_parent" android:layout_height="match_parent">
+            <cn.edu.szu.szuschedule.view.SquareButton
+                    android:id="@+id/gobye"
+                    android:text="@string/module_gobye"
+                    android:layout_width="1dp"
+                    android:textAllCaps="false" android:layout_margin="10dp"
+                    android:background="@drawable/button_gobye_bg"
+                    android:textColor="@android:color/white"/>
+            <cn.edu.szu.szuschedule.view.SquareButton
+                    android:id="@+id/course"
+                    android:text="@string/module_course"
+                    android:layout_width="1dp" android:layout_margin="10dp"
+                    android:background="@drawable/button_course_bg"
+                    android:textColor="@android:color/white"/>
+        </TableRow>
+    </TableLayout>
+    <Button
+            android:id="@+id/moduleController"
+            android:text="@string/module_controller"
+            android:layout_width="wrap_content"
+            android:layout_marginTop="30dp"
+            android:paddingEnd="40dp"
+            android:paddingStart="40dp"
+            android:layout_below="@+id/tableLayout"
+            android:layout_centerHorizontal="true"
+            android:layout_height="40dp"
+            android:scaleType="fitXY" android:background="@drawable/button_module_controller_bg"
+            android:textColor="@android:color/white"/>
+</RelativeLayout>

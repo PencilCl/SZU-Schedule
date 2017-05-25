@@ -7,4 +7,10 @@
     <string name="bottom_navigation_home">主页</string>
     <string name="bottom_navigation_time">日程</string>
     <string name="bottom_navigation_user">用户</string>
+
+    <string name="module_blackboard">Blackboard</string>
+    <string name="module_book">图书馆</string>
+    <string name="module_gobye">Gobye</string>
+    <string name="module_course">课程表</string>
+    <string name="module_controller">模块管理</string>
 </resources>

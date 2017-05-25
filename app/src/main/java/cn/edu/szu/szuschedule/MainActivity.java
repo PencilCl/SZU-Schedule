@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.edu.szu.szuschedule.adapter.ViewPagerAdapter;
+import cn.edu.szu.szuschedule.fragment.HomeFragment;
 import cn.edu.szu.szuschedule.fragment.TestFragment;
 import cn.edu.szu.szuschedule.fragment.UserFragment;
 
@@ -77,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
 
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
-        adapter.addFragment(TestFragment.newInstance("主页页面"));
+        adapter.addFragment(new HomeFragment());
         adapter.addFragment(TestFragment.newInstance("日历页面"));
         adapter.addFragment(new UserFragment());
         viewPager.setAdapter(adapter);

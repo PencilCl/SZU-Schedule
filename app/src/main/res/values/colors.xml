@@ -3,4 +3,10 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="indianRed1">#e84e40</color>
+    <color name="honeydew">#9ccc65</color>
+    <color name="cornsilk">#ff7043</color>
+    <color name="azure">#29b6f6</color>
+    <color name="lavender">#5c6bc0</color>
 </resources>
