@@ -13,4 +13,6 @@
     <string name="module_gobye">Gobye</string>
     <string name="module_course">课程表</string>
     <string name="module_controller">模块管理</string>
+
+    <string name="module_curriculum">课程表</string>
 </resources>
