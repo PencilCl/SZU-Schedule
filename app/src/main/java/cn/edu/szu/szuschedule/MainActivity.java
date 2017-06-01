@@ -1,11 +1,15 @@
 package cn.edu.szu.szuschedule;
 
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.edu.szu.szuschedule.adapter.ViewPagerAdapter;
@@ -29,6 +33,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
         ButterKnife.bind(this);
 
         init();
+
     }
 
     @Override
@@ -56,7 +61,6 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
                 return onBottomNavigationItemSelected(item);
             }
         });
-
         setupViewPager(viewPager);
     }
 

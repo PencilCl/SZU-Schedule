@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/title"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:weightSum="1">
+    <include layout="@layout/module_title_layout" />
+
+    <Switch
+        android:id="@+id/switch_bb"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="BlackBoard"
+        android:textSize="23dp"
+        android:textStyle="bold"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_weight="0.10"
+        android:thumb="@drawable/thumb"
+        android:track="@drawable/track"
+        android:checked="true"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.7dp"
+        android:background="#000"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="20dp"
+        />
+
+    <Switch
+        android:id="@+id/switch_library"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text= "图书馆"
+        android:textSize="23dp"
+        android:textStyle="bold"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="20dp"
+        android:layout_weight="0.10"
+        android:thumb="@drawable/thumb"
+        android:track="@drawable/track"
+        android:checked="true"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.7dp"
+        android:background="#000"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="20dp"
+        />
+
+    <Switch
+        android:id="@+id/switch_gobye"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="GoBye"
+        android:textSize="23dp"
+        android:textStyle="bold"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="20dp"
+        android:layout_weight="0.10"
+        android:thumb="@drawable/thumb"
+        android:track="@drawable/track"
+        android:checked="true"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.7dp"
+        android:background="#000"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="20dp"
+        />
+
+    <Switch
+        android:id="@+id/switch_schedule"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="课程表"
+        android:textSize="23dp"
+        android:textStyle="bold"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="20dp"
+        android:layout_weight="0.10"
+        android:thumb="@drawable/thumb"
+        android:track="@drawable/track"
+        android:checked="true"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.7dp"
+        android:background="#000"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="20dp"
+        />
+
+</LinearLayout>
