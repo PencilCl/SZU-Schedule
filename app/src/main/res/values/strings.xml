@@ -5,7 +5,7 @@
     <string name="about_us">关于我们</string>
 
     <string name="bottom_navigation_home">主页</string>
-    <string name="bottom_navigation_time">日程</string>
+    <string name="bottom_navigation_todo_list">事项</string>
     <string name="bottom_navigation_user">用户</string>
 
     <string name="module_blackboard">Blackboard</string>
