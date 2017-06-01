@@ -47,7 +47,6 @@ public class ModuleActivity extends AppCompatActivity {
         switch_setvisibility(module_visibility[2],switch1);
         switch1 = (Switch)findViewById(R.id.switch_schedule);
         switch_setvisibility(module_visibility[3],switch1);
-
     }
 
     private void switch_setvisibility(int visibility,Switch s){
