@@ -17,6 +17,7 @@
         android:layout_marginTop="50dp" />
 
     <EditText
+        android:padding="10dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textPersonName"
@@ -26,21 +27,26 @@
         android:layout_marginTop="50dp"
         android:layout_marginBottom="50dp"
         android:hint="校园卡账号"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
-        android:background="@android:drawable/spinner_background" />
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:background="@drawable/solid_border_bg"
+
+        />
 
     <EditText
+        android:padding="10dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textPassword"
         android:ems="10"
         android:id="@+id/editText2"
         android:layout_weight="0.01"
-        android:layout_marginLeft="30dp"
+        android:layout_marginLeft="40dp"
         android:hint="密码"
-        android:layout_marginRight="30dp"
-        android:background="@android:drawable/spinner_background" />
+        android:layout_marginRight="40dp"
+        android:background="@drawable/solid_border_bg"
+
+        />
 
     <Button
         android:text="@string/login"
@@ -54,4 +60,5 @@
         android:background="@color/colorPrimary"
         android:textSize="20sp"
         android:textColor="@android:color/background_light" />
+
 </LinearLayout>
