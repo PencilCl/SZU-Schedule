@@ -36,7 +36,6 @@ public class TodoListAdapter extends RecyclerView.Adapter {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         ViewHolder mHolder = (ViewHolder) holder;
-        mHolder.position = position;
         TodoItem todoItem = mTodoItems.get(position);
 
         mHolder.itemName.setText(todoItem.getItemName());
@@ -52,7 +51,6 @@ public class TodoListAdapter extends RecyclerView.Adapter {
         public ImageView alertImg;
         public TextView itemName;
         public TextView itemNote;
-        public int position;
 
         public ViewHolder(View itemView) {
             super(itemView);
