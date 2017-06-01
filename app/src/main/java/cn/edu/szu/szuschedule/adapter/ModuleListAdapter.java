@@ -61,6 +61,7 @@ public class ModuleListAdapter extends RecyclerView.Adapter {
 
         myViewHolder.module.setText(moduleItem.getModuleNameRes());
         myViewHolder.module.setBackgroundResource(moduleItem.getBgRes());
+        myViewHolder.module.setOnClickListener(moduleItem.getOnClickListener());
     }
 
     class MyViewHolder extends RecyclerView.ViewHolder {
