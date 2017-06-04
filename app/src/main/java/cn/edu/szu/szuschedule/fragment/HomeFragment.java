@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import cn.edu.szu.szuschedule.CurriculumScheduleActivity;
 import cn.edu.szu.szuschedule.ModuleActivity;
 import cn.edu.szu.szuschedule.R;
 
@@ -77,6 +78,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
         } else if (moduleName.equals(getResources().getString(R.string.module_curriculum))) {
             // click module curriculum
+            startActivity(new Intent(getContext(), CurriculumScheduleActivity.class));
         }
     }
 

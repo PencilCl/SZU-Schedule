@@ -24,6 +24,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".ModuleActivity"></activity>
+        <activity android:name=".CurriculumScheduleActivity"
+                  android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>
