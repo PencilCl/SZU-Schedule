@@ -4,27 +4,21 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-
-
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import java.util.ArrayList;
+
 import cn.edu.szu.szuschedule.CurriculumScheduleActivity;
+import cn.edu.szu.szuschedule.GobyeActivity;
 import cn.edu.szu.szuschedule.ModuleActivity;
 import cn.edu.szu.szuschedule.R;
-
 import cn.edu.szu.szuschedule.adapter.ModuleListAdapter;
 import cn.edu.szu.szuschedule.object.ModuleItem;
-import cn.edu.szu.szuschedule.view.SquareButton;
-
-import java.util.ArrayList;
 import cn.edu.szu.szuschedule.view.SquareButton;
 
 /**
@@ -52,7 +46,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
         moduleList.setAdapter(new ModuleListAdapter(moduleItems));
 
-        Button module_control_button = (Button)view.findViewById(R.id.moduleController);
+        Button module_control_button = (Button) view.findViewById(R.id.moduleController);
         module_control_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -75,64 +69,64 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
         } else if (moduleName.equals(getResources().getString(R.string.module_gobye))) {
             // click module gobye
-
+            startActivity(new Intent(getContext(), GobyeActivity.class));
         } else if (moduleName.equals(getResources().getString(R.string.module_curriculum))) {
             // click module curriculum
             startActivity(new Intent(getContext(), CurriculumScheduleActivity.class));
         }
     }
 
-    private void intent_to_module(){
+    private void intent_to_module() {
         RecyclerView rv = (RecyclerView) view.findViewById(R.id.moduleList);
         Intent intent = new Intent(getActivity(), ModuleActivity.class);
-        int []is_visible = new int[4];
+        int[] is_visible = new int[4];
         RecyclerView.LayoutManager lm = rv.getLayoutManager();
         View view = lm.findViewByPosition(0);
-        SquareButton sb = (SquareButton)view.findViewById(R.id.module);
+        SquareButton sb = (SquareButton) view.findViewById(R.id.module);
         is_visible[0] = sb.getVisibility();
         view = lm.findViewByPosition(1);
-        sb = (SquareButton)view.findViewById(R.id.module);
+        sb = (SquareButton) view.findViewById(R.id.module);
         is_visible[1] = sb.getVisibility();
         view = lm.findViewByPosition(2);
-        sb = (SquareButton)view.findViewById(R.id.module);
+        sb = (SquareButton) view.findViewById(R.id.module);
         is_visible[2] = sb.getVisibility();
         view = lm.findViewByPosition(3);
-        sb = (SquareButton)view.findViewById(R.id.module);
+        sb = (SquareButton) view.findViewById(R.id.module);
         is_visible[3] = sb.getVisibility();
-        intent.putExtra("module_visibility",is_visible);
+        intent.putExtra("module_visibility", is_visible);
 
-        startActivityForResult(intent,1);
+        startActivityForResult(intent, 1);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == 1 && resultCode == 1){
+        if (requestCode == 1 && resultCode == 1) {
             RecyclerView rv = (RecyclerView) view.findViewById(R.id.moduleList);
             RecyclerView.LayoutManager lm = rv.getLayoutManager();
             View view = lm.findViewByPosition(0);
-            SquareButton sb = (SquareButton)view.findViewById(R.id.module);
-            Boolean is_checked = data.getBooleanExtra("bb_checked",true);
-            set_Square_visibility(sb,is_checked);
+            SquareButton sb = (SquareButton) view.findViewById(R.id.module);
+            Boolean is_checked = data.getBooleanExtra("bb_checked", true);
+            set_Square_visibility(sb, is_checked);
 
             view = lm.findViewByPosition(1);
-            sb = (SquareButton)view.findViewById(R.id.module);
-            is_checked = data.getBooleanExtra("library_checked",true);
-            set_Square_visibility(sb,is_checked);
+            sb = (SquareButton) view.findViewById(R.id.module);
+            is_checked = data.getBooleanExtra("library_checked", true);
+            set_Square_visibility(sb, is_checked);
 
             view = lm.findViewByPosition(2);
-            sb = (SquareButton)view.findViewById(R.id.module);
-            is_checked = data.getBooleanExtra("gobye_checked",true);
-            set_Square_visibility(sb,is_checked);
+            sb = (SquareButton) view.findViewById(R.id.module);
+            is_checked = data.getBooleanExtra("gobye_checked", true);
+            set_Square_visibility(sb, is_checked);
 
             view = lm.findViewByPosition(3);
-            sb = (SquareButton)view.findViewById(R.id.module);
-            is_checked = data.getBooleanExtra("schedule_checked",true);
-            set_Square_visibility(sb,is_checked);
+            sb = (SquareButton) view.findViewById(R.id.module);
+            is_checked = data.getBooleanExtra("schedule_checked", true);
+            set_Square_visibility(sb, is_checked);
         }
     }
 
-    private void set_Square_visibility(SquareButton sb,Boolean is_checked) {
-        if (is_checked == true) {
+    private void set_Square_visibility(SquareButton sb, Boolean is_checked) {
+        if (is_checked) {
             sb.setVisibility(View.VISIBLE);
         } else {
             sb.setVisibility(View.INVISIBLE);
