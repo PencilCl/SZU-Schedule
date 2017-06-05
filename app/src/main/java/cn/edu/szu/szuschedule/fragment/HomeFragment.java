@@ -22,6 +22,7 @@ import cn.edu.szu.szuschedule.R;
 
 import cn.edu.szu.szuschedule.adapter.ModuleListAdapter;
 import cn.edu.szu.szuschedule.object.ModuleItem;
+import cn.edu.szu.szuschedule.view.LibrarybooksActivity;
 import cn.edu.szu.szuschedule.view.SquareButton;
 
 import java.util.ArrayList;
@@ -72,6 +73,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
         } else if (moduleName.equals(getResources().getString(R.string.module_book))) {
             // click module book
+            startActivity(new Intent(getContext(), LibrarybooksActivity.class));
 
         } else if (moduleName.equals(getResources().getString(R.string.module_gobye))) {
             // click module gobye
