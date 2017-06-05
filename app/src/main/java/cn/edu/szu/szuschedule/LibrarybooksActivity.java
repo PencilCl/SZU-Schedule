@@ -1,4 +1,4 @@
-package cn.edu.szu.szuschedule.view;
+package cn.edu.szu.szuschedule;
 
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
