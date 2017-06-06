@@ -38,6 +38,9 @@
 
         <activity android:name=".BlackBoardHomeworkInfoActivity"
                   android:theme="@style/AppTheme.NoActionBar" />
+
+
+        <activity android:name=".userTellUsActivity" />
     </application>
 
 </manifest>

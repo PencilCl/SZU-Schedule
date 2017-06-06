@@ -1,6 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:weightSum="1">
 
+    <EditText android:layout_width="302dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.29"
+        android:background="@drawable/solid_border_bg"
+        android:hint="请填写你想要发送的信息"
+        android:textAlignment="textStart"
+        android:height="50dp"
+        android:gravity="top|left"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="50dp">
+
+    </EditText>
+
+    <Button
+        android:text="提交"
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.01"
+        android:background="@drawable/button_common_bg"
+        android:textColor="@android:color/background_light"
+        android:textSize="20sp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="10dp" />
 </LinearLayout>

@@ -16,10 +16,10 @@
         android:text="@string/login_out"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/button3"
+        android:id="@+id/loginOut"
         android:layout_marginLeft="50dp"
         android:layout_marginRight="50dp"
-        android:background="?attr/colorPrimary"
+        android:background="@drawable/button_common_bg"
         android:textColor="@android:color/background_light"
         android:textSize="20sp" />
 
@@ -27,11 +27,11 @@
         android:text="@string/about_us"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/button4"
+        android:id="@+id/aboutUs"
         android:layout_marginLeft="50dp"
         android:layout_marginRight="50dp"
         android:layout_marginTop="10dp"
-        android:background="?attr/colorPrimary"
+        android:background="@drawable/button_common_bg"
         android:textColor="@android:color/background_light"
         android:textSize="20sp" />
 </LinearLayout>
