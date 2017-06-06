@@ -35,6 +35,9 @@
         <activity
             android:name=".GobyeActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".BlackBoardHomeworkInfoActivity"
+                  android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

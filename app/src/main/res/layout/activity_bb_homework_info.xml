@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto" android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/title_bar_height"
+            android:background="@color/colorPrimary">
+        <ImageView
+                android:layout_width="60dp"
+                android:layout_height="match_parent"
+                app:srcCompat="@drawable/ic_back" android:scaleType="fitXY"
+                android:padding="20dp"/>
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/bb_homework_info_title"
+                android:textColor="#ffffff"
+                android:layout_centerInParent="true" android:textSize="20sp"/>
+    </RelativeLayout>
+
+    <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                      android:orientation="vertical">
+            <TextView
+                    android:id="@+id/name"
+                    android:text="实验1 软件界面设计"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:textSize="24sp"
+                    android:textStyle="normal|bold" android:textColor="@android:color/black" android:textAlignment="center"/>
+            <TextView
+                    android:id="@+id/description"
+                    android:text="请下载附件中的实验1报告模板，按照报告中的实验要求完成实验内容，提交实验结果，并补充填写完整实验报告，提交实验报告。\n注意：\n1. 实验报告中需要有实验结果的截屏图像，截图中能体现出自己的个性标识者佳（因可佐证是自己完成的）。\n2.请在2016年3月27日晚23：30分之前提交作业，逾期0分。每人只有一次提交操作机会，提交慎重，认真检查、确认无问题后再提交，漏交、错交等没有撤销重提交操作支持。\n3. 如有抄袭，一律取消考试资格。"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:layout_marginTop="10dp" android:textSize="18sp"/>
+            <TextView
+                    android:id="@+id/deadline"
+                    android:text="截止日期： 2017年3月27日 下午11时30分00秒"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:layout_marginTop="10dp" android:textSize="18sp"/>
+            <TextView
+                    android:text="@string/bb_homework_info_attachment"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:layout_marginTop="10dp" android:textSize="18sp"/>
+            <TextView
+                    android:id="@+id/attachmentList"
+                    android:text="实验6 系统设计及实现 模板.doc (实验6 系统设计及实现 模板.doc) "
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:textSize="18sp"/>
+            <TextView
+                    android:id="@+id/score"
+                    android:text="得分： 90"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:layout_marginTop="10dp" android:textSize="18sp"/>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

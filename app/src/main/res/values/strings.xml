@@ -16,4 +16,6 @@
 
     <string name="url_gobye">http://stu.szu.edu.cn/gobye/</string>
 
+    <string name="bb_homework_info_title">作业详情</string>
+    <string name="bb_homework_info_attachment">附件</string>
 </resources>
