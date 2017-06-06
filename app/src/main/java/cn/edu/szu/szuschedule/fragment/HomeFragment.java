@@ -13,6 +13,7 @@ import android.widget.Button;
 
 import java.util.ArrayList;
 
+import cn.edu.szu.szuschedule.BlackBoardActivity;
 import cn.edu.szu.szuschedule.CurriculumScheduleActivity;
 import cn.edu.szu.szuschedule.GobyeActivity;
 import cn.edu.szu.szuschedule.ModuleActivity;
@@ -64,7 +65,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         String moduleName = view.getText().toString();
         if (moduleName.equals(getResources().getString(R.string.module_blackboard))) {
             // click module blackboard
-
+            startActivity(new Intent(getContext(), BlackBoardActivity.class));
         } else if (moduleName.equals(getResources().getString(R.string.module_book))) {
             // click module book
             startActivity(new Intent(getContext(), LibrarybooksActivity.class));

@@ -15,6 +15,7 @@
     <string name="module_controller">模块管理</string>
 
     <string name="url_gobye">http://stu.szu.edu.cn/gobye/</string>
+    <string name="bb_suject_title">BlackBoard科目列表</string>
 
     <string name="bb_homework_info_title">作业详情</string>
     <string name="bb_homework_info_attachment">附件</string>
