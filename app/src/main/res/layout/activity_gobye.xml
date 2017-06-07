@@ -7,17 +7,19 @@
     android:orientation="vertical">
 
     <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/title_bar_height"
-        android:background="@color/azure">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="@string/module_gobye"
-            android:textColor="#ffffff"
-            android:textSize="20sp"/>
+            style="@style/MyTitleBar"
+            android:background="@color/azure">
+        <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="@dimen/status_bar_height">
+            <ImageButton
+                    android:id="@+id/sub_back"
+                    style="@style/MyTitleBar.Back" app:srcCompat="@drawable/ic_back"/>
+            <TextView
+                    style="@style/MyTitleBar.Title"
+                    android:text="@string/module_gobye" />
+        </RelativeLayout>
     </RelativeLayout>
 
     <WebView

@@ -18,6 +18,8 @@ import cn.edu.szu.szuschedule.fragment.ScheduleFragment;
 import cn.edu.szu.szuschedule.fragment.TestFragment;
 import cn.edu.szu.szuschedule.fragment.UserFragment;
 
+import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
+
 public class MainActivity extends AppCompatActivity implements ViewPager.OnPageChangeListener {
     @Bind(R.id.viewPager)
     ViewPager viewPager;
@@ -31,6 +33,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        setTranslucentStatus(this);
 
         init();
 

@@ -1,16 +1,14 @@
 package cn.edu.szu.szuschedule;
 
-import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Switch;
 
-import cn.edu.szu.szuschedule.R;
-import cn.edu.szu.szuschedule.fragment.HomeFragment;
+import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
 public class ModuleActivity extends AppCompatActivity {
 
@@ -18,6 +16,7 @@ public class ModuleActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_module);
+        setTranslucentStatus(this);
 
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null){
@@ -26,7 +25,7 @@ public class ModuleActivity extends AppCompatActivity {
 
         get_intent_data();
 
-        Button button_back = (Button) findViewById(R.id.module_back);
+        ImageButton button_back = (ImageButton) findViewById(R.id.sub_back);
         button_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

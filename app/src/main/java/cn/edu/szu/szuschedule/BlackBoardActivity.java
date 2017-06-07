@@ -8,6 +8,8 @@ import android.widget.*;
 import android.os.Bundle;
 import android.view.*;
 
+import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
+
 /**
  * Created by jazzyzhong on 2017/6/3.
  */
@@ -20,6 +22,15 @@ public class BlackBoardActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.bb_subject_list);
+        setTranslucentStatus(this);
+
+        ImageButton button_back = (ImageButton) findViewById(R.id.sub_back);
+        button_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
 
         /*toolbar1 = (Toolbar)findViewById(R.id.bb_index_toolbar);
         sub_list = (ListView)this.findViewById(R.id.sublist);//建立联系

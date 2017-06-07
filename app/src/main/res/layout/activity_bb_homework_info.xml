@@ -5,20 +5,19 @@
               android:layout_height="match_parent">
 
     <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/title_bar_height"
+            style="@style/MyTitleBar"
             android:background="@color/colorPrimary">
-        <ImageView
-                android:layout_width="60dp"
+        <RelativeLayout
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:srcCompat="@drawable/ic_back" android:scaleType="fitXY"
-                android:padding="20dp"/>
-        <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/bb_homework_info_title"
-                android:textColor="#ffffff"
-                android:layout_centerInParent="true" android:textSize="20sp"/>
+                android:layout_marginTop="@dimen/status_bar_height">
+            <ImageButton
+                    android:id="@+id/sub_back"
+                    style="@style/MyTitleBar.Back" app:srcCompat="@drawable/ic_back"/>
+            <TextView
+                    style="@style/MyTitleBar.Title"
+                    android:text="@string/bb_homework_info_title" />
+        </RelativeLayout>
     </RelativeLayout>
 
     <ScrollView

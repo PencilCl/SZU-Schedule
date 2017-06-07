@@ -4,34 +4,21 @@
               android:layout_height="wrap_content" android:textAlignment="center"
               android:orientation="vertical">
 
-
-    <android.support.v7.widget.Toolbar
-            android:id="@+id/bb_index_toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/honeydew"
-            android:theme="?attr/actionBarTheme"
-            android:minHeight="56dp">
-
-        <Button
-            android:id="@+id/sub_back"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_margin="20dp"
-            android:background="@drawable/ic_back"
-            />
-
-        <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent = "true"
-                android:layout_gravity = "center"
-                android:text="@string/bb_suject_title"
-                android:textSize="22sp"
-                android:textColor="@android:color/white"
-        />
-
-    </android.support.v7.widget.Toolbar>
+    <RelativeLayout
+            style="@style/MyTitleBar"
+            android:background="@color/honeydew">
+        <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="@dimen/status_bar_height">
+            <ImageButton
+                    android:id="@+id/sub_back"
+                    style="@style/MyTitleBar.Back" app:srcCompat="@drawable/ic_back"/>
+            <TextView
+                    style="@style/MyTitleBar.Title"
+                    android:text="@string/bb_subject_title" />
+        </RelativeLayout>
+    </RelativeLayout>
 
     <Button
             android:text="离散数学"

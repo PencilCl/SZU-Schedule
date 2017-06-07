@@ -9,15 +9,16 @@
         tools:context="cn.edu.szu.szuschedule.MainActivity">
 
     <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/title_bar_height"
+            style="@style/MyTitleBar"
             android:background="@color/colorPrimary">
-        <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/app_name"
-                android:textColor="#ffffff"
-                android:layout_centerInParent="true" android:textSize="20sp"/>
+        <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="@dimen/status_bar_height">
+            <TextView
+                    style="@style/MyTitleBar.Title"
+                    android:text="@string/app_name" />
+        </RelativeLayout>
     </RelativeLayout>
 
     <android.support.design.widget.BottomNavigationView

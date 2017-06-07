@@ -9,8 +9,12 @@ import android.support.v7.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.view.View;
+import android.widget.ImageButton;
 import cn.edu.szu.szuschedule.adapter.BooksAdapter;
 import cn.edu.szu.szuschedule.object.bookItem;
+
+import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
 public class LibrarybooksActivity extends AppCompatActivity {
 
@@ -19,12 +23,21 @@ public class LibrarybooksActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.books_content);
+        setContentView(R.layout.activity_books);
+        setTranslucentStatus(this);
 
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.hide();
         }
+
+        ImageButton button_back = (ImageButton) findViewById(R.id.sub_back);
+        button_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
 
         initBooks();
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.book_recyclerView);

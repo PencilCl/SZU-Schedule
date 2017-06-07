@@ -4,10 +4,14 @@ import android.annotation.TargetApi;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ImageButton;
+
+import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
 public class GobyeActivity extends AppCompatActivity {
 
@@ -18,6 +22,15 @@ public class GobyeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gobye);
+        setTranslucentStatus(this);
+
+        ImageButton button_back = (ImageButton) findViewById(R.id.sub_back);
+        button_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
 
         webView = (WebView) findViewById(R.id.wv_gobye);
         settings = webView.getSettings();

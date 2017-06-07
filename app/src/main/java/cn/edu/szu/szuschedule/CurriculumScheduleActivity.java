@@ -3,9 +3,13 @@ package cn.edu.szu.szuschedule;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.ImageButton;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.edu.szu.szuschedule.view.CurriculumSchedule;
+
+import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
 /**
  * Created by chenlin on 01/06/2017.
@@ -19,6 +23,15 @@ public class CurriculumScheduleActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_curriculum_schedule);
         ButterKnife.bind(this);
+        setTranslucentStatus(this);
+
+        ImageButton button_back = (ImageButton) findViewById(R.id.sub_back);
+        button_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
 
         curriculumSchedule.setCurrentDay(4);
 
