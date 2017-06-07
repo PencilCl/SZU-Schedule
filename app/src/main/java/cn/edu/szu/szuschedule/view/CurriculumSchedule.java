@@ -7,9 +7,11 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
+import cn.edu.szu.szuschedule.object.Course;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 
 /**
  * Created by chenlin on 04/06/2017.
@@ -27,6 +29,9 @@ public class CurriculumSchedule extends GridLayout implements View.OnClickListen
             -7681
     };
 
+    private HashMap<TextView, Course> textViewCourseHashMap;
+    private OnClickListener onClickListener;
+
     public CurriculumSchedule(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         removeAllViews();
@@ -43,13 +48,15 @@ public class CurriculumSchedule extends GridLayout implements View.OnClickListen
 
     /**
      * 添加课程到课程表中
-     * @param courseName 课程名
-     * @param venue 上课地点
-     * @param day 星期
-     * @param begin 开始节数
-     * @param end 结束节数
+     * @param course
      */
-    public void addCourse(String courseName, String venue, int day, int begin, int end) {
+    public void addCourse(Course course) {
+        String courseName = course.getCourseName();
+        String venue = course.getVenue();
+        int day = course.getDay();
+        int begin = course.getBegin();
+        int end = course.getEnd();
+
         if (day < 1 || day > 5) return ; // 检查星期
         if (begin > end || begin < 1 || end > 12) return ; // 检查上课时间
 
@@ -64,13 +71,25 @@ public class CurriculumSchedule extends GridLayout implements View.OnClickListen
         textView.setGravity(Gravity.CENTER);
         textView.setBackgroundColor(bgColorArray[strToInt(courseName) % bgColorArray.length]);
         textView.setOnClickListener(this);
+
+        textViewCourseHashMap.put(textView, course);
+
         addView(textView);
     }
 
     @Override
     public void onClick(View v) {
-        TextView textView = (TextView) v;
-        System.out.println(textView.getText());
+        if (this.onClickListener != null) {
+            this.onClickListener.onClick(v, textViewCourseHashMap.get(v));
+        }
+    }
+
+    public void setOnClickListener(OnClickListener onClickListener) {
+        this.onClickListener = onClickListener;
+    }
+
+    public interface OnClickListener {
+        void onClick(View v, Course course);
     }
 
     /**
@@ -87,6 +106,7 @@ public class CurriculumSchedule extends GridLayout implements View.OnClickListen
      * 初始化课程表
      */
     private void init() {
+        textViewCourseHashMap = new HashMap<>();
         // 六列(周一到周五)十三行(1-12节)，
         setColumnCount(6);
         setRowCount(13);

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content" android:padding="16dp">
+
+    <TextView
+            android:id="@+id/courseName"
+            android:text="软件工程"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textAlignment="center"
+            android:textSize="18sp" android:textColor="@android:color/black"/>
+    <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <EditText
+                android:id="@+id/venue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/dialog_course_venue_hint"/>
+    </android.support.design.widget.TextInputLayout>
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        <Button
+                android:id="@+id/cancel"
+                android:text="@string/dialog_button_cancel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_weight="1"/>
+        <Button
+                android:id="@+id/save"
+                android:text="@string/dialog_button_save"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_weight="1"/>
+    </LinearLayout>
+</LinearLayout>

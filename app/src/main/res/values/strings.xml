@@ -26,4 +26,8 @@
     <string name="book_borrow_time">借阅时间:</string>
     <string name="book_deadline">归还时间:</string>
 
+    <string name="dialog_course_venue_hint">教室信息</string>
+    <string name="dialog_button_cancel">关闭</string>
+    <string name="dialog_button_save">保存</string>
+
 </resources>
