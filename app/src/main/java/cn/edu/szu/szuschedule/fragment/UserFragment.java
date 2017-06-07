@@ -4,19 +4,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import butterknife.Bind;
-import butterknife.ButterKnife;
 import cn.edu.szu.szuschedule.LoginActivity;
 import cn.edu.szu.szuschedule.R;
-import cn.edu.szu.szuschedule.userTellUsActivity;
+import cn.edu.szu.szuschedule.UserTellUsActivity;
 
 import android.widget.Button;
-import android.widget.Toast;
 
 /**
  * Created by chenlin on 24/05/2017.
@@ -39,11 +35,9 @@ public class UserFragment extends Fragment{
         aboutUs.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                getActivity().startActivity(new Intent(getContext(),userTellUsActivity.class));
+                getActivity().startActivity(new Intent(getContext(),UserTellUsActivity.class));
             }
         });
         return view;
     }
-
-
 }

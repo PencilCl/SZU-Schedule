@@ -41,7 +41,9 @@
             android:theme="@style/AppTheme.NoActionBar"/>
 
 
-        <activity android:name=".userTellUsActivity"/>
+        <activity android:name=".UserTellUsActivity"
+                  android:theme="@style/AppTheme.NoActionBar"
+        />
 
         <activity
             android:name=".BlackBoardActivity"
