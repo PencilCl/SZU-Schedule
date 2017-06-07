@@ -25,7 +25,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ModuleActivity"/>
+        <activity android:name=".ModuleActivity"
+                  android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".CurriculumScheduleActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
@@ -49,6 +50,9 @@
             android:name=".BlackBoardActivity"
             android:theme="@style/AppTheme.NoActionBar"
             />
+
+        <activity android:name=".HomeworkListActivity"
+                  android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

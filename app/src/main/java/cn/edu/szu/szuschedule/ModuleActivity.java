@@ -7,21 +7,29 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Switch;
+import butterknife.Bind;
+import butterknife.ButterKnife;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
 public class ModuleActivity extends AppCompatActivity {
+    public static int requestCode = 155;
+
+    @Bind(R.id.switch_bb)
+    Switch switchBB;
+    @Bind(R.id.switch_gobye)
+    Switch switchGobye;
+    @Bind(R.id.switch_library)
+    Switch switchLibrary;
+    @Bind(R.id.switch_schedule)
+    Switch switchSchedule;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_module);
+        ButterKnife.bind(this);
         setTranslucentStatus(this);
-
-        ActionBar actionBar = getSupportActionBar();
-        if(actionBar != null){
-            actionBar.hide();
-        }
 
         get_intent_data();
 
@@ -37,26 +45,10 @@ public class ModuleActivity extends AppCompatActivity {
 
     private void get_intent_data(){
         Intent intent = getIntent();
-        int module_visibility[] = intent.getIntArrayExtra("module_visibility");
-        Switch switch1 = (Switch)findViewById(R.id.switch_bb);
-        switch_setvisibility(module_visibility[0],switch1);
-        switch1 = (Switch)findViewById(R.id.switch_library);
-        switch_setvisibility(module_visibility[1],switch1);
-        switch1 = (Switch)findViewById(R.id.switch_gobye);
-        switch_setvisibility(module_visibility[2],switch1);
-        switch1 = (Switch)findViewById(R.id.switch_schedule);
-        switch_setvisibility(module_visibility[3],switch1);
-    }
-
-    private void switch_setvisibility(int visibility,Switch s){
-        switch (visibility){
-            case 0:
-                s.setChecked(true);
-                break;
-            default:
-                s.setChecked(false);
-                break;
-        }
+        switchBB.setChecked(intent.getBooleanExtra("module_bb", false));
+        switchLibrary.setChecked(intent.getBooleanExtra("module_library", false));
+        switchGobye.setChecked(intent.getBooleanExtra("module_gobye", false));
+        switchSchedule.setChecked(intent.getBooleanExtra("module_schedule", false));
     }
 
     private void intent_back(){
@@ -73,7 +65,7 @@ public class ModuleActivity extends AppCompatActivity {
         switch1 = (Switch)findViewById(R.id.switch_schedule);
         is_checked = switch1.isChecked();
         intent.putExtra("schedule_checked",is_checked);
-        setResult(1,intent);
+        setResult(requestCode,intent);
     }
     @Override
     public void onBackPressed() {

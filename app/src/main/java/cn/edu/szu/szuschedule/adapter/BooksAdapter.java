@@ -10,11 +10,11 @@ import android.widget.TextView;
 import java.util.List;
 
 import cn.edu.szu.szuschedule.R;
-import cn.edu.szu.szuschedule.object.bookItem;
+import cn.edu.szu.szuschedule.object.BookItem;
 
 public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.ViewHolder> {
 
-    private List<bookItem> mBookList;
+    private List<BookItem> mBookList;
 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -30,7 +30,7 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.ViewHolder> 
         }
     }
 
-    public BooksAdapter(List<bookItem> bookList) {
+    public BooksAdapter(List<BookItem> bookList) {
         mBookList = bookList;
     }
 
@@ -42,7 +42,7 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.ViewHolder> 
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        bookItem book = mBookList.get(position);
+        BookItem book = mBookList.get(position);
         holder.book_Name.setText(book.getBook_Name());
         holder.return_DeadLine.append(book.getReturn_DeadLine());
         holder.borrow_Time.append(book.getBorrow_Time());

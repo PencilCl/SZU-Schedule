@@ -12,13 +12,13 @@ import java.util.List;
 import android.view.View;
 import android.widget.ImageButton;
 import cn.edu.szu.szuschedule.adapter.BooksAdapter;
-import cn.edu.szu.szuschedule.object.bookItem;
+import cn.edu.szu.szuschedule.object.BookItem;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
 public class LibrarybooksActivity extends AppCompatActivity {
 
-    private List<bookItem> bookList = new ArrayList<>();
+    private List<BookItem> bookList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +50,7 @@ public class LibrarybooksActivity extends AppCompatActivity {
 
     private void initBooks() {
         for (int i = 0; i < 3; i++) {
-            bookItem book = new bookItem("Linux私房菜", "2017年4月20日", "2017年7月20日");
+            BookItem book = new BookItem("Linux私房菜", "2017年4月20日", "2017年7月20日");
             bookList.add(book);
         }
     }

@@ -19,9 +19,24 @@
                     android:text="@string/module_blackboard" />
         </RelativeLayout>
     </RelativeLayout>
-
-    <android.support.v7.widget.RecyclerView
+    <android.support.design.widget.TabLayout
+            android:id="@+id/tabLayout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" android:id="@+id/subject_recycle"/>
+            android:layout_height="wrap_content"
+            app:tabIndicatorColor="@android:color/holo_green_dark"
+            android:background="@color/honeydew"
+            app:tabSelectedTextColor="@android:color/white"
+            app:tabTextColor="#eee">
+
+        <android.support.design.widget.TabItem android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                               android:text="@string/bb_homework_list"/>
+        <android.support.design.widget.TabItem android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                               android:text="@string/bb_subject_list"/>
+    </android.support.design.widget.TabLayout>
+
+    <android.support.v4.view.ViewPager
+            android:id="@+id/viewPager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
 </LinearLayout>

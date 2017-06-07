@@ -17,12 +17,24 @@ public class SubjectAdapter extends RecyclerView.Adapter<SubjectAdapter.ViewHold
 
     List<SubjectItem> subitem;
     static class ViewHolder extends RecyclerView.ViewHolder{
+        View view;
         TextView sname;
         TextView sstatus;
-        ViewHolder(View view) {
-            super(view);
+        SubjectItem subjectItem;
+        ViewHolder(View itemView) {
+            super(itemView);
+            view = itemView;
             sname = (TextView)view.findViewById(R.id.subjectname);
             sstatus = (TextView)view.findViewById(R.id.subjectstatus);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (subjectItem.getOnClickListener() != null) {
+                        subjectItem.getOnClickListener().onClick(v, subjectItem);
+                    }
+                }
+            });
         }
     }
 
@@ -38,6 +50,7 @@ public class SubjectAdapter extends RecyclerView.Adapter<SubjectAdapter.ViewHold
         SubjectItem sitem = subitem.get(position);
         holder.sname.setText(sitem.getSubname());
         holder.sstatus.setText(sitem.getSubstatus());
+        holder.subjectItem = sitem;
     }
     @Override
     public int getItemCount(){return subitem.size();}

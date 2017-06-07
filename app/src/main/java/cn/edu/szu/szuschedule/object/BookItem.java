@@ -1,12 +1,12 @@
 package cn.edu.szu.szuschedule.object;
 
-public class bookItem {
+public class BookItem {
 
     private String borrow_Time;
     private String book_Name;
     private String return_DeadLine;
 
-    public bookItem(String book_Name, String borrow_Time, String return_DeadLine) {
+    public BookItem(String book_Name, String borrow_Time, String return_DeadLine) {
         this.borrow_Time = borrow_Time;
         this.book_Name = book_Name;
         this.return_DeadLine = return_DeadLine;

@@ -16,7 +16,7 @@
                     style="@style/MyTitleBar.Back" app:srcCompat="@drawable/ic_back"/>
             <TextView
                     style="@style/MyTitleBar.Title"
-                    android:text="@string/module_curriculum" />
+                    android:text="@string/module_schedule" />
         </RelativeLayout>
     </RelativeLayout>
 

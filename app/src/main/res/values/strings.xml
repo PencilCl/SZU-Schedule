@@ -9,13 +9,15 @@
     <string name="bottom_navigation_user">用户</string>
 
     <string name="module_blackboard">Blackboard</string>
-    <string name="module_book">图书馆</string>
+    <string name="module_library">图书馆</string>
     <string name="module_gobye">Gobye</string>
-    <string name="module_curriculum">课程表</string>
+    <string name="module_schedule">课程表</string>
     <string name="module_controller">模块管理</string>
 
     <string name="url_gobye">http://stu.szu.edu.cn/gobye/</string>
     <string name="bb_subject_title">BlackBoard科目列表</string>
+    <string name="bb_homework_list">作业列表</string>
+    <string name="bb_subject_list">科目列表</string>
 
     <string name="bb_homework_info_title">作业详情</string>
     <string name="bb_homework_info_attachment">附件</string>

@@ -20,29 +20,6 @@ public class ModuleListAdapter extends RecyclerView.Adapter {
         this.moduleItems = moduleItems;
     }
 
-    /**
-     * add module
-     */
-    public void addModule(ModuleItem moduleItem) {
-        moduleItems.add(moduleItem);
-    }
-
-    /**
-     * remove module by object
-     * @param moduleItem moduleItem object
-     */
-    public void removeModule(ModuleItem moduleItem) {
-        moduleItems.remove(moduleItem);
-    }
-
-    /**
-     * remove module by position
-     * @param position
-     */
-    public void removeModule(int position) {
-        moduleItems.remove(position);
-    }
-
     @Override
     public int getItemCount() {
         return moduleItems.size();

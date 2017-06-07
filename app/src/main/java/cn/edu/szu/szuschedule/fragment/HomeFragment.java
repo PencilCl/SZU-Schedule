@@ -29,6 +29,13 @@ import cn.edu.szu.szuschedule.view.SquareButton;
 public class HomeFragment extends Fragment implements View.OnClickListener {
     View view;
     RecyclerView moduleList;
+    ModuleListAdapter moduleListAdapter;
+
+    ModuleItem moduleBB;
+    ModuleItem moduleLibrary;
+    ModuleItem moduleGobye;
+    ModuleItem moduleSchedule;
+
     public ArrayList<ModuleItem> moduleItems;
 
     @Nullable
@@ -40,13 +47,19 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
         moduleList.setLayoutManager(layoutManager);
 
-        moduleItems = new ArrayList<>();
-        moduleItems.add(new ModuleItem(R.string.module_blackboard, R.drawable.button_bb_bg, this));
-        moduleItems.add(new ModuleItem(R.string.module_book, R.drawable.button_book_bg, this));
-        moduleItems.add(new ModuleItem(R.string.module_gobye, R.drawable.button_gobye_bg, this));
-        moduleItems.add(new ModuleItem(R.string.module_curriculum, R.drawable.button_course_bg, this));
+        moduleBB = new ModuleItem(R.string.module_blackboard, R.drawable.button_bb_bg, this);
+        moduleLibrary = new ModuleItem(R.string.module_library, R.drawable.button_library_bg, this);
+        moduleGobye = new ModuleItem(R.string.module_gobye, R.drawable.button_gobye_bg, this);
+        moduleSchedule = new ModuleItem(R.string.module_schedule, R.drawable.button_schedule_bg, this);
 
-        moduleList.setAdapter(new ModuleListAdapter(moduleItems));
+        moduleItems = new ArrayList<>();
+        moduleItems.add(moduleBB);
+        moduleItems.add(moduleLibrary);
+        moduleItems.add(moduleGobye);
+        moduleItems.add(moduleSchedule);
+
+        moduleListAdapter = new ModuleListAdapter(moduleItems);
+        moduleList.setAdapter(moduleListAdapter);
 
         Button module_control_button = (Button) view.findViewById(R.id.moduleController);
         module_control_button.setOnClickListener(new View.OnClickListener() {
@@ -66,73 +79,55 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         if (moduleName.equals(getResources().getString(R.string.module_blackboard))) {
             // click module blackboard
             startActivity(new Intent(getContext(), BlackBoardActivity.class));
-        } else if (moduleName.equals(getResources().getString(R.string.module_book))) {
+        } else if (moduleName.equals(getResources().getString(R.string.module_library))) {
             // click module book
             startActivity(new Intent(getContext(), LibrarybooksActivity.class));
 
         } else if (moduleName.equals(getResources().getString(R.string.module_gobye))) {
             // click module gobye
             startActivity(new Intent(getContext(), GobyeActivity.class));
-        } else if (moduleName.equals(getResources().getString(R.string.module_curriculum))) {
+        } else if (moduleName.equals(getResources().getString(R.string.module_schedule))) {
             // click module curriculum
             startActivity(new Intent(getContext(), CurriculumScheduleActivity.class));
         }
     }
 
     private void intent_to_module() {
-        RecyclerView rv = (RecyclerView) view.findViewById(R.id.moduleList);
         Intent intent = new Intent(getActivity(), ModuleActivity.class);
-        int[] is_visible = new int[4];
-        RecyclerView.LayoutManager lm = rv.getLayoutManager();
-        View view = lm.findViewByPosition(0);
-        SquareButton sb = (SquareButton) view.findViewById(R.id.module);
-        is_visible[0] = sb.getVisibility();
-        view = lm.findViewByPosition(1);
-        sb = (SquareButton) view.findViewById(R.id.module);
-        is_visible[1] = sb.getVisibility();
-        view = lm.findViewByPosition(2);
-        sb = (SquareButton) view.findViewById(R.id.module);
-        is_visible[2] = sb.getVisibility();
-        view = lm.findViewByPosition(3);
-        sb = (SquareButton) view.findViewById(R.id.module);
-        is_visible[3] = sb.getVisibility();
-        intent.putExtra("module_visibility", is_visible);
+        intent.putExtra("module_bb", moduleItems.indexOf(moduleBB) != -1);
+        intent.putExtra("module_library", moduleItems.indexOf(moduleLibrary) != -1);
+        intent.putExtra("module_gobye", moduleItems.indexOf(moduleGobye) != -1);
+        intent.putExtra("module_schedule", moduleItems.indexOf(moduleSchedule) != -1);
 
-        startActivityForResult(intent, 1);
+        startActivityForResult(intent, ModuleActivity.requestCode);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == 1 && resultCode == 1) {
-            RecyclerView rv = (RecyclerView) view.findViewById(R.id.moduleList);
-            RecyclerView.LayoutManager lm = rv.getLayoutManager();
-            View view = lm.findViewByPosition(0);
-            SquareButton sb = (SquareButton) view.findViewById(R.id.module);
+        if (requestCode == ModuleActivity.requestCode && resultCode == ModuleActivity.requestCode) {
             Boolean is_checked = data.getBooleanExtra("bb_checked", true);
-            set_Square_visibility(sb, is_checked);
+            setSquareVisibility(moduleBB, is_checked);
 
-            view = lm.findViewByPosition(1);
-            sb = (SquareButton) view.findViewById(R.id.module);
             is_checked = data.getBooleanExtra("library_checked", true);
-            set_Square_visibility(sb, is_checked);
+            setSquareVisibility(moduleLibrary, is_checked);
 
-            view = lm.findViewByPosition(2);
-            sb = (SquareButton) view.findViewById(R.id.module);
             is_checked = data.getBooleanExtra("gobye_checked", true);
-            set_Square_visibility(sb, is_checked);
+            setSquareVisibility(moduleGobye, is_checked);
 
-            view = lm.findViewByPosition(3);
-            sb = (SquareButton) view.findViewById(R.id.module);
             is_checked = data.getBooleanExtra("schedule_checked", true);
-            set_Square_visibility(sb, is_checked);
+            setSquareVisibility(moduleSchedule, is_checked);
         }
     }
 
-    private void set_Square_visibility(SquareButton sb, Boolean is_checked) {
-        if (is_checked) {
-            sb.setVisibility(View.VISIBLE);
-        } else {
-            sb.setVisibility(View.INVISIBLE);
+    private void setSquareVisibility(ModuleItem moduleItem, Boolean is_checked) {
+        int pos = moduleItems.indexOf(moduleItem);
+        if (is_checked && pos == -1) {
+            moduleItems.add(moduleItem);
+            moduleListAdapter.notifyItemInserted(moduleItems.size());
+        } else if (!is_checked && pos != -1) {
+            moduleItems.remove(moduleItem);
+            moduleListAdapter.notifyItemRemoved(pos);
+            moduleListAdapter.notifyItemRangeChanged(pos, moduleItems.size() - pos);
         }
     }
 }

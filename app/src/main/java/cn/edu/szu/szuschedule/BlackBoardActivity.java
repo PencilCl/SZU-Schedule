@@ -1,16 +1,16 @@
 package cn.edu.szu.szuschedule;
 
-import android.database.DataSetObserver;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import java.util.*;
-import android.annotation.*;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.widget.*;
 import android.os.Bundle;
 import android.view.*;
-import cn.edu.szu.szuschedule.adapter.SubjectAdapter;
-import cn.edu.szu.szuschedule.object.SubjectItem;
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import cn.edu.szu.szuschedule.adapter.ViewPagerAdapter;
+import cn.edu.szu.szuschedule.fragment.SubjectListFragment;
+import cn.edu.szu.szuschedule.fragment.HomeworkListFragment;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
@@ -18,11 +18,16 @@ import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
  * Created by jazzyzhong on 2017/6/3.
  */
 public class BlackBoardActivity extends AppCompatActivity {
-    public List<SubjectItem> subitem = new ArrayList<>();
+    @Bind(R.id.viewPager)
+    ViewPager viewPager;
+    @Bind(R.id.tabLayout)
+    TabLayout tabLayout;
+
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bb_index);
+        ButterKnife.bind(this);
         setTranslucentStatus(this);
 
         ImageButton button_back = (ImageButton) findViewById(R.id.sub_back);
@@ -33,20 +38,16 @@ public class BlackBoardActivity extends AppCompatActivity {
             }
         });
 
-        setinfo();
-        RecyclerView recy = (RecyclerView)findViewById(R.id.subject_recycle);
-        LinearLayoutManager sub_list_layoutManager = new LinearLayoutManager(this);
-        recy.setLayoutManager(sub_list_layoutManager);
-        SubjectAdapter subadpter = new SubjectAdapter(subitem);
-        recy.setAdapter(subadpter);
+        initViewPager();
+        tabLayout.setupWithViewPager(viewPager);
+        tabLayout.getTabAt(0).setText(R.string.bb_homework_list);
+        tabLayout.getTabAt(1).setText(R.string.bb_subject_list);
     }
 
-    private void setinfo(){
-
-            SubjectItem sitem1 = new SubjectItem("软件工程", "有新动态");
-            subitem.add(sitem1);
-            SubjectItem sitem2 = new SubjectItem("计算机系统", "有新动态");
-            subitem.add(sitem2);
+    private void initViewPager() {
+        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        adapter.addFragment(new HomeworkListFragment());
+        adapter.addFragment(new SubjectListFragment());
+        viewPager.setAdapter(adapter);
     }
-
 }

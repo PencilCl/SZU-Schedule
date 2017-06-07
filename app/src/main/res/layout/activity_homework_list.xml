@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent" xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:orientation="vertical"
->
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
 
     <RelativeLayout
             style="@style/MyTitleBar"
-            android:background="@color/cornsilk">
+            android:background="@color/honeydew">
         <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -17,13 +17,12 @@
                     style="@style/MyTitleBar.Back" app:srcCompat="@drawable/ic_back"/>
             <TextView
                     style="@style/MyTitleBar.Title"
-                    android:text="@string/module_library" />
+                    android:text="@string/bb_homework_list" />
         </RelativeLayout>
     </RelativeLayout>
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/book_recyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
+            android:id="@+id/homeworkList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
 </LinearLayout>
