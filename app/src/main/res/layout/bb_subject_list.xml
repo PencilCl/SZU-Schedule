@@ -9,18 +9,17 @@
             android:id="@+id/bb_index_toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/button_bb_bg"
+            android:background="@color/honeydew"
             android:theme="?attr/actionBarTheme"
             android:minHeight="56dp">
 
         <Button
-                android:id="@+id/sub_back"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Back"
-                android:background="@drawable/button_bb_bg"
-                android:gravity="center_vertical|left"
-                style="@style/Widget.AppCompat.Button.Borderless"/>
+            android:id="@+id/sub_back"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_margin="20dp"
+            android:background="@drawable/ic_back"
+            />
 
         <TextView
                 android:layout_width="wrap_content"
