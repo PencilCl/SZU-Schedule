@@ -4,9 +4,13 @@ import android.database.DataSetObserver;
 import android.support.v7.app.AppCompatActivity;
 import java.util.*;
 import android.annotation.*;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.widget.*;
 import android.os.Bundle;
 import android.view.*;
+import cn.edu.szu.szuschedule.adapter.SubjectAdapter;
+import cn.edu.szu.szuschedule.object.SubjectItem;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
@@ -14,14 +18,11 @@ import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
  * Created by jazzyzhong on 2017/6/3.
  */
 public class BlackBoardActivity extends AppCompatActivity {
-    ListView sub_list;
-    //private List<info> listinfo = new ArrayList<info>();
-    Button[] btns = new Button[4];
-    Toolbar toolbar1;
+    public List<SubjectItem> subitem = new ArrayList<>();
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.bb_subject_list);
+        setContentView(R.layout.activity_bb_index);
         setTranslucentStatus(this);
 
         ImageButton button_back = (ImageButton) findViewById(R.id.sub_back);
@@ -32,35 +33,20 @@ public class BlackBoardActivity extends AppCompatActivity {
             }
         });
 
-        /*toolbar1 = (Toolbar)findViewById(R.id.bb_index_toolbar);
-        sub_list = (ListView)this.findViewById(R.id.sublist);//建立联系
-
-        btns[0] = (Button)findViewById(R.id.subject1);
-        btns[1] = (Button)findViewById(R.id.subject2);
-        btns[2] = (Button)findViewById(R.id.subject3);
-        btns[3] = (Button)findViewById(R.id.subject4);
-        Button button_back = (Button) findViewById(R.id.sub_back);
-        button_back.setOnClickListener(newm  View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                finish();
-            }
-        });
-*/
-        /*Button button_back = (Button) findViewById(R.id.module_back);
-        button_back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                intent_back();
-                finish();
-            }
-        });*/
-
-       /* ArrayAdapter<Button> btn_array = new ArrayAdapter<Button>(this,R.id.sublist,btns);
-        sub_list.setAdapter(btn_array);*/
-        //sub_list.setAdapter(new ListAdapter());
+        setinfo();
+        RecyclerView recy = (RecyclerView)findViewById(R.id.subject_recycle);
+        LinearLayoutManager sub_list_layoutManager = new LinearLayoutManager(this);
+        recy.setLayoutManager(sub_list_layoutManager);
+        SubjectAdapter subadpter = new SubjectAdapter(subitem);
+        recy.setAdapter(subadpter);
     }
 
+    private void setinfo(){
+
+            SubjectItem sitem1 = new SubjectItem("软件工程", "有新动态");
+            subitem.add(sitem1);
+            SubjectItem sitem2 = new SubjectItem("计算机系统", "有新动态");
+            subitem.add(sitem2);
+    }
 
 }

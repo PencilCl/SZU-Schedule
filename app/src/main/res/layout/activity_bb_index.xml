@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:orientation="vertical"  >
+              android:layout_height="fill_parent" xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical">
 
+    <RelativeLayout
+            style="@style/MyTitleBar"
+            android:background="@color/honeydew">
+        <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="@dimen/status_bar_height">
+            <ImageButton
+                    android:id="@+id/sub_back"
+                    style="@style/MyTitleBar.Back" app:srcCompat="@drawable/ic_back"/>
+            <TextView
+                    style="@style/MyTitleBar.Title"
+                    android:text="@string/module_blackboard" />
+        </RelativeLayout>
+    </RelativeLayout>
 
-    <ListView
+    <android.support.v7.widget.RecyclerView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/sublist"/>
+            android:layout_height="match_parent" android:id="@+id/subject_recycle"/>
+
 </LinearLayout>
