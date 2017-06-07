@@ -1,15 +1,14 @@
 package cn.edu.szu.szuschedule;
 
+import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.adapter.BooksAdapter;
 import cn.edu.szu.szuschedule.object.bookItem;
 
@@ -23,7 +22,7 @@ public class LibrarybooksActivity extends AppCompatActivity {
         setContentView(R.layout.books_content);
 
         ActionBar actionBar = getSupportActionBar();
-        if(actionBar != null){
+        if (actionBar != null) {
             actionBar.hide();
         }
 
@@ -36,10 +35,9 @@ public class LibrarybooksActivity extends AppCompatActivity {
 
     }
 
-    private void initBooks(){
-        for(int i=0;i<3;i++)
-        {
-            bookItem book = new bookItem("借书时间:2017年4月20日","借阅书籍:Linux私房菜","归还时间:2017年7月20日");
+    private void initBooks() {
+        for (int i = 0; i < 3; i++) {
+            bookItem book = new bookItem("Linux私房菜", "2017年4月20日", "2017年7月20日");
             bookList.add(book);
         }
     }

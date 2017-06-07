@@ -19,4 +19,9 @@
 
     <string name="bb_homework_info_title">作业详情</string>
     <string name="bb_homework_info_attachment">附件</string>
+
+    <string name="book_name">默认书名</string>
+    <string name="book_borrow_time">借阅时间:</string>
+    <string name="book_deadline">归还时间:</string>
+
 </resources>
