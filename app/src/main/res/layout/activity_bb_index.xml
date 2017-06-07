@@ -5,8 +5,21 @@
               android:orientation="vertical"  >
 
 
-    <ListView
+    <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/sublist"/>
+            android:layout_height="@dimen/title_bar_height"
+            android:background="@color/honeydew">
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="@string/module_blackboard"
+                android:textColor="#ffffff"
+                android:textSize="20sp"/>
+    </RelativeLayout>
+    <android.support.v7.widget.RecyclerView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" android:id="@+id/subject_recycle"/>
+
 </LinearLayout>
