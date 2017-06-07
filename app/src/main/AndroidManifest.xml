@@ -25,10 +25,10 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ModuleActivity" />
+        <activity android:name=".ModuleActivity"/>
         <activity
             android:name=".CurriculumScheduleActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar"/>
 
         <activity android:name=".LibrarybooksActivity"/>
 
@@ -36,11 +36,17 @@
             android:name=".GobyeActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
 
-        <activity android:name=".BlackBoardHomeworkInfoActivity"
-                  android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".BlackBoardHomeworkInfoActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
 
 
-        <activity android:name=".userTellUsActivity" />
+        <activity android:name=".userTellUsActivity"/>
+
+        <activity
+            android:name=".BlackBoardActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            />
     </application>
 
 </manifest>
