@@ -11,6 +11,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageButton;
 
+import cn.edu.szu.szuschedule.workaround.AndroidBug5497Workaround;
+
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
 public class GobyeActivity extends AppCompatActivity {
@@ -23,6 +25,7 @@ public class GobyeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gobye);
         setTranslucentStatus(this);
+        AndroidBug5497Workaround.assistActivity(this);
 
         ImageButton button_back = (ImageButton) findViewById(R.id.sub_back);
         button_back.setOnClickListener(new View.OnClickListener() {
