@@ -12,6 +12,11 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary true
     }
+
+    packagingOptions {
+        exclude 'META-INF/rxjava.properties'
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -25,6 +30,11 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+
+    compile 'com.lzy.net:okgo:3.0.1'
+//    compile 'com.lzy.net:okrx2:2.0.1'
+    compile "io.reactivex.rxjava2:rxjava:2.1.0"
+    compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
 
     // 自动绑定视图组件到代码
     compile 'com.android.support:appcompat-v7:25.3.1'
