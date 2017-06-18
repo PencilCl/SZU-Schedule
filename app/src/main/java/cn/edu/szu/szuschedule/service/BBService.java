@@ -23,11 +23,11 @@ import java.util.regex.Pattern;
  */
 public class BBService {
     private final static String baseUrl = "http://elearning.szu.edu.cn";
-    private final static String loginPageUrl = "https://ia.szu.edu.cn/cas/login?service=https%3a%2f%2fauth.szu.edu.cn%3a443%2fcas.aspx%2flogin%3fservice%3dhttp%3a%2f%2felearning.szu.edu.cn%2fwebapps%2fcbb-sdgxtyM-BBLEARN%2fgetuserid.jsp";
+    private final static String loginPageUrl = "https://authserver.szu.edu.cn/authserver/login?service=https%3a%2f%2fauth.szu.edu.cn%2fcas.aspx%2flogin%3fservice%3dhttp%3a%2f%2felearning.szu.edu.cn%2fwebapps%2fcbb-sdgxtyM-BBLEARN%2fgetuserid.jsp";
     private final static String enterBBUrl = "http://elearning.szu.edu.cn/webapps/cbb-sdgxtyM-BBLEARN/checksession.jsp";
-    private final static String loginJSCode = "document.getElementById(\"username\").value = \"%s\";" +
-            "document.getElementById(\"password\").value = \"%s\";" +
-            "document.getElementById(\"loginImgbtn\").click();";
+    private final static String loginJSCode = "document.getElementsByName(\"username\")[0].value = \"%s\";" +
+            "document.getElementsByName(\"password\")[0].value = \"%s\";" +
+            "document.getElementsByTagName(\"button\")[0].click();";
     private final static String bbUrl = "http://elearning.szu.edu.cn/webapps/portal/frameset.jsp"; // 成功进入bb的页面
 
     private final static String stuNumReg = "<input.*id=\"studentId\".*value=\"(.*?)\".*/>";
@@ -132,7 +132,7 @@ public class BBService {
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
             if (loginPageUrl.equals(url)) {
-                view.evaluateJavascript("document.getElementById(\"msg\").innerHTML;", new ValueCallback<String>() {
+                view.evaluateJavascript("document.getElementById(\"msg\");", new ValueCallback<String>() {
                     @Override
                     public void onReceiveValue(String value) {
                         if ("null".equals(value)) {

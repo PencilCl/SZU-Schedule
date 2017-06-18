@@ -8,11 +8,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
+import android.widget.Toast;
 import cn.edu.szu.szuschedule.LoginActivity;
 import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.UserTellUsActivity;
 
 import android.widget.Button;
+import cn.edu.szu.szuschedule.util.LoadingUtil;
+import com.lzy.okgo.OkGo;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
+import java.io.IOException;
 
 /**
  * Created by chenlin on 24/05/2017.
@@ -27,6 +37,7 @@ public class UserFragment extends Fragment{
         loginOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                clearWebViewCache();
                 getActivity().startActivity(new Intent(getActivity(),LoginActivity.class));
                 getActivity().finish();
             }
@@ -39,5 +50,11 @@ public class UserFragment extends Fragment{
             }
         });
         return view;
+    }
+
+    public void clearWebViewCache() {
+        // 清除cookie即可彻底清除缓存
+        CookieSyncManager.createInstance(getContext());
+        CookieManager.getInstance().removeAllCookie();
     }
 }
