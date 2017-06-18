@@ -132,7 +132,7 @@ public class BBService {
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
             if (loginPageUrl.equals(url)) {
-                view.evaluateJavascript("document.getElementById(\"msg\");", new ValueCallback<String>() {
+                view.evaluateJavascript("document.getElementById(\"errorMsg\").innerText;", new ValueCallback<String>() {
                     @Override
                     public void onReceiveValue(String value) {
                         if ("null".equals(value)) {
