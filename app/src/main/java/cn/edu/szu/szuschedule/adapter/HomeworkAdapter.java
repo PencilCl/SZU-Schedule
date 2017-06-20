@@ -6,7 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import cn.edu.szu.szuschedule.R;
-import cn.edu.szu.szuschedule.object.HomeworkItem;
+import cn.edu.szu.szuschedule.object.Homework;
 
 import java.util.ArrayList;
 
@@ -14,9 +14,9 @@ import java.util.ArrayList;
  * Created by chenlin on 07/06/2017.
  */
 public class HomeworkAdapter extends RecyclerView.Adapter {
-    private ArrayList<HomeworkItem> homeworkItems;
+    private ArrayList<Homework> homeworkItems;
 
-    public HomeworkAdapter(ArrayList<HomeworkItem> moduleItems) {
+    public HomeworkAdapter(ArrayList<Homework> moduleItems) {
         this.homeworkItems = moduleItems;
     }
 
@@ -34,7 +34,7 @@ public class HomeworkAdapter extends RecyclerView.Adapter {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         MyViewHolder myViewHolder = (HomeworkAdapter.MyViewHolder) holder;
-        HomeworkItem homeworkItem = homeworkItems.get(position);
+        Homework homeworkItem = homeworkItems.get(position);
 
         myViewHolder.courseName.setText(homeworkItem.getCourseName());
         myViewHolder.name.setText(homeworkItem.getName());
@@ -47,7 +47,7 @@ public class HomeworkAdapter extends RecyclerView.Adapter {
         public TextView courseName;
         public TextView name;
         public TextView otherInfo;
-        public HomeworkItem homeworkItem;
+        public Homework homeworkItem;
 
         public MyViewHolder(View itemView) {
             super(itemView);

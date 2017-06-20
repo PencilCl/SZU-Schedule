@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import cn.edu.szu.szuschedule.adapter.BooksAdapter;
 import cn.edu.szu.szuschedule.object.BookItem;
+import cn.edu.szu.szuschedule.object.User;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
@@ -50,7 +51,7 @@ public class LibrarybooksActivity extends AppCompatActivity {
 
     private void initBooks() {
         for (int i = 0; i < 3; i++) {
-            BookItem book = new BookItem("Linux私房菜", "2017年4月20日", "2017年7月20日");
+            BookItem book = new BookItem(new User("aa","aa","handsome"),"Linux私房菜", "2017年4月20日", "2017年7月20日");
             bookList.add(book);
         }
     }

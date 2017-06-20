@@ -3,7 +3,8 @@ package cn.edu.szu.szuschedule.object;
 import android.view.View;
 
 /**
- * Created by jazzyzhong on 2017/6/7.
+ * Created by jazzyzhong on 2017/6/7..
+ * 待删
  */
 public class SubjectItem {
     private String subname;

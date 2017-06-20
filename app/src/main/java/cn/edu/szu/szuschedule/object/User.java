@@ -8,16 +8,17 @@ public class User {
     private String password;
     private String sex;
     private String stuNum;
-
-    public User(String account, String password) {
-        this(account, password, null, null);
+    private String name;
+    public User(String account, String password,String name) {
+        this(account, password, null, null,name);
     }
 
-    public User(String account, String password, String sex, String stuNum) {
+    public User(String account, String password, String sex, String stuNum,String name) {
         this.account = account;
         this.password = password;
         this.sex = sex;
         this.stuNum = stuNum;
+        this.name = name;
     }
 
     public String getAccount() {
@@ -35,5 +36,7 @@ public class User {
     public String getStuNum() {
         return stuNum;
     }
+
+    public String getName() {   return name;    }
 
 }
