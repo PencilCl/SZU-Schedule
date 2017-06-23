@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-
 import java.util.List;
 
 import cn.edu.szu.szuschedule.R;
@@ -44,8 +43,8 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.ViewHolder> 
     public void onBindViewHolder(ViewHolder holder, int position) {
         BookItem book = mBookList.get(position);
         holder.book_Name.setText(book.getBook_Name());
-        holder.return_DeadLine.append(book.getReturn_DeadLine());
-        holder.borrow_Time.append(book.getBorrow_Time());
+        holder.return_DeadLine.setText("归还时间：" + book.getReturn_DeadLine());
+        holder.borrow_Time.setText("借阅时间：" + book.getBorrow_Time());
     }
 
     @Override

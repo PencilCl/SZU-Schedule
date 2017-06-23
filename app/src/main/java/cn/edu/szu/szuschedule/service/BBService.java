@@ -1,9 +1,19 @@
 package cn.edu.szu.szuschedule.service;
 
 import android.app.Application;
-import android.webkit.*;
 import android.webkit.CookieManager;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+
 import com.lzy.okgo.OkGo;
+
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -12,10 +22,6 @@ import io.reactivex.functions.Function;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
-
-import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by chenlin on 14/06/2017.
@@ -29,6 +35,7 @@ public class BBService {
             "document.getElementsByName(\"password\")[0].value = \"%s\";" +
             "document.getElementsByTagName(\"button\")[0].click();";
     private final static String bbUrl = "http://elearning.szu.edu.cn/webapps/portal/frameset.jsp"; // 成功进入bb的页面
+    private final static String booksUrl = "http://opac.lib.szu.edu.cn/opac/user/bookborrowed.aspx";
 
     private final static String stuNumReg = "<input.*id=\"studentId\".*value=\"(.*?)\".*/>";
     private static Pattern stuNumPattern;
@@ -115,6 +122,17 @@ public class BBService {
                         });
             }
         });
+    }
+
+    /**
+     * 登录图书馆
+     * 登录BB成功后调用
+     */
+    public static void loginLibrary() {
+        CookieManager cookieManager = CookieManager.getInstance();
+        if(cookieManager.getCookie(booksUrl) == null) {
+            getInstance().webView.loadUrl(booksUrl);
+        }
     }
 
     class MyWebViewClient extends WebViewClient {

@@ -5,10 +5,10 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.edu.szu.szuschedule.service.BBService;
@@ -49,6 +49,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 .subscribe(new Consumer<String>() {
                     @Override
                     public void accept(String stuNum) throws Exception {
+                        BBService.loginLibrary();
                         loadingUtil.hideLoading();
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                         finish();

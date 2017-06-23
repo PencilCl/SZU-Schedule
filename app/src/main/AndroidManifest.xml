@@ -15,7 +15,6 @@
             android:name=".MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar"/>
-
         <activity
             android:name=".LoginActivity"
             android:theme="@style/AppTheme.NoActionBar">
@@ -25,35 +24,29 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
-        <activity android:name=".ModuleActivity"
-                  android:theme="@style/AppTheme.NoActionBar"/>
+        <activity
+            android:name=".ModuleActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".CurriculumScheduleActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
-
         <activity android:name=".LibrarybooksActivity"/>
-
         <activity
             android:name=".GobyeActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
-
         <activity
             android:name=".BlackBoardHomeworkInfoActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
-
-
-        <activity android:name=".UserTellUsActivity"
-                  android:theme="@style/AppTheme.NoActionBar"
-        />
-
+        <activity
+            android:name=".UserTellUsActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".BlackBoardActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            />
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity
+            android:name=".HomeworkListActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
 
-        <activity android:name=".HomeworkListActivity"
-                  android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>
