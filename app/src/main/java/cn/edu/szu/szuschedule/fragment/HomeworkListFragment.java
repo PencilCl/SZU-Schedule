@@ -32,8 +32,8 @@ public class HomeworkListFragment extends Fragment implements Homework.OnClickLi
         homeworkList.setLayoutManager(sub_list_layoutManager);
 
         ArrayList<Homework> homeworkItems = new ArrayList<>();
-        homeworkItems.add(new Homework("软件工程", "实验1 软件界面设计", "2017年3月27日 下午11时30分00秒", this));
-        homeworkItems.add(new Homework("软件工程", "实验2 数据库建模", "2017年4月4日 下午10时00分00秒", this));
+//        homeworkItems.add(new Homework("软件工程", "实验1 软件界面设计", "2017年3月27日 下午11时30分00秒", this));
+//        homeworkItems.add(new Homework("软件工程", "实验2 数据库建模", "2017年4月4日 下午10时00分00秒", this));
 
         homeworkList.setAdapter(new HomeworkAdapter(homeworkItems));
 
