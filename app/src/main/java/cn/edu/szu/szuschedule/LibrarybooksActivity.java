@@ -10,6 +10,7 @@ import android.view.View;
 import android.webkit.CookieManager;
 import android.widget.ImageButton;
 
+import cn.edu.szu.szuschedule.service.UserService;
 import com.lzy.okgo.OkGo;
 
 import java.io.IOException;
@@ -89,7 +90,7 @@ public class LibrarybooksActivity extends AppCompatActivity {
                 Pattern pattern = Pattern.compile(reg, Pattern.CASE_INSENSITIVE);
                 Matcher matcher = pattern.matcher(html);
                 while(matcher.find()) {
-                    BookItem book = new BookItem(new User("","",""), matcher.group(2), matcher.group(3), matcher.group(1));
+                    BookItem book = new BookItem(UserService.getCurrentUser(), matcher.group(2), matcher.group(3), matcher.group(1));
                     bookList.add(book);
                 }
             } catch (Exception e) {

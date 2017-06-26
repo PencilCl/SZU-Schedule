@@ -1,6 +1,8 @@
 package cn.edu.szu.szuschedule.fragment;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -38,6 +40,7 @@ public class UserFragment extends Fragment{
             @Override
             public void onClick(View view) {
                 clearWebViewCache();
+                clearSharedPreferences();
                 getActivity().startActivity(new Intent(getActivity(),LoginActivity.class));
                 getActivity().finish();
             }
@@ -50,6 +53,21 @@ public class UserFragment extends Fragment{
             }
         });
         return view;
+    }
+
+    /**
+     * 清除SharedPreferences下当前用户的信息
+     */
+    private void clearSharedPreferences() {
+        SharedPreferences sp = getActivity().getSharedPreferences("user", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.remove("id");
+        editor.remove("account");
+        editor.remove("password");
+        editor.remove("name");
+        editor.remove("sex");
+        editor.remove("stuNum");
+        editor.commit();
     }
 
     public void clearWebViewCache() {
