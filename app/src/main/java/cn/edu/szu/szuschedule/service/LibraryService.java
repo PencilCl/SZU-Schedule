@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.webkit.*;
 import cn.edu.szu.szuschedule.object.BookItem;
+import cn.edu.szu.szuschedule.object.Course;
 import cn.edu.szu.szuschedule.object.TodoItem;
 import cn.edu.szu.szuschedule.object.User;
 import cn.edu.szu.szuschedule.util.SZUAuthenticationWebViewClient;
@@ -18,6 +19,7 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
@@ -68,7 +70,7 @@ public class LibraryService {
             @Override
             public void subscribe(ObservableEmitter<ArrayList<BookItem>> e) throws Exception {
                 if (bookItems == null) {
-                    bookItems = new ArrayList<>();
+                    bookItems = new ArrayList<BookItem>();
                 } else {
                     // 如果bookItems已存在，则直接返回
                     e.onNext(bookItems);
@@ -82,6 +84,23 @@ public class LibraryService {
                 } else {
                     e.onNext(bookItems);
                 }
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+
+    public static Observable<ArrayList<BookItem>> getBorrowedBooksToDo(final Context context) {
+        return Observable.create(new ObservableOnSubscribe<ArrayList<BookItem>>() {
+            @Override
+            public void subscribe(ObservableEmitter<ArrayList<BookItem>> e) throws Exception {
+//                bookItems = new ArrayList<BookItem>();
+                getLocalDatabaseData(context);// 从本地数据库中获取
+                // 如果本地数据为空，则从网络中获取
+                if (bookItems.size() == 0) {
+                    getDataFromNetwork(context, e);
+                } else {
+                    e.onNext(bookItems);
+                }
+                e.onNext(bookItems);
             }
         }).subscribeOn(Schedulers.io());
     }
@@ -110,19 +129,51 @@ public class LibraryService {
      * @param date
      * @return
      */
-    public static List<TodoItem> getTodoList(Date date) {
-        List<TodoItem> todoItems = new ArrayList<>();
-        if (bookItems == null) {
-            return todoItems;
-        }
-        for (BookItem bookItem : bookItems) {
-            if (bookItem.getEndDate().equals(date.toString())) {
-                todoItems.add(new TodoItem("还书", bookItem.getBookName(), "00:00", "23:59"));
-            }
-        }
-        return todoItems;
-    }
+//    public static List<TodoItem> getTodoList(Date date) {
+//        List<TodoItem> todoItems = new ArrayList<>();
+//        if (bookItems == null) {
+//            return todoItems;
+//        }
+//        for (BookItem bookItem : bookItems) {
+//            if (bookItem.getEndDate().equals(date.toString())) {
+//                todoItems.add(new TodoItem("还书", bookItem.getBookName(), "00:00", "23:59"));
+//            }
+//        }
+//        return todoItems;
+//    }
+    public static Observable<ArrayList<TodoItem>> getTodoList (final Context context,final Date date){
+        return Observable.create(new ObservableOnSubscribe<ArrayList<TodoItem>>() {
+            @Override
+            public void subscribe(@NonNull ObservableEmitter<ArrayList<TodoItem>> e) throws Exception {
+                ArrayList<TodoItem> todoItems = new ArrayList<>();
+                if (bookItems == null) {
+                    bookItems = new ArrayList<BookItem>();
+                    getBorrowedBooksToDo(context)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe();
+                }
 
+                for (BookItem bookItem : bookItems) {
+                    String Date = date.getYear()+"";
+                    if(date.getMonth()<10){
+                        Date+="-0"+(date.getMonth()+1);
+                    }else{
+                        Date+="-"+(date.getMonth()+1);
+                    }
+                    if(date.getDate()<10){
+                        Date+="-0"+date.getDate();
+                    }else{
+                        Date+="-"+date.getDate();
+                    }
+                    System.out.println(bookItem.getEndDate()+" 还书    "+Date);
+                    if (bookItem.getEndDate().equals(Date)) {
+                        todoItems.add(new TodoItem("还书", bookItem.getBookName(), "00:00", "23:59"));
+                     }
+                 }
+                e.onNext(todoItems);
+            }
+        }).subscribeOn(Schedulers.io());
+    }
     /**
      * 从网络上获取借阅数据
      * 并保存到数据库中

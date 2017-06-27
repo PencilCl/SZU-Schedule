@@ -12,6 +12,10 @@ import com.lzy.okgo.OkGo;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.ObservableSource;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.Response;
 import org.json.JSONArray;
@@ -41,7 +45,7 @@ public class CurriculumScheduleService {
             @Override
             public void subscribe(ObservableEmitter<List<Course>> e) throws Exception {
                 if (courses == null) {
-                    courses = new ArrayList<>();
+                    courses = new ArrayList<Course>();
                     getLocalDatabaseData(context);
 
                     // 如果本地数据库没有数据，则从网络上获取
@@ -53,6 +57,24 @@ public class CurriculumScheduleService {
                         }
                     }
                 }
+                e.onNext(courses);
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+    public static Observable<List<Course>> getCoursesToDo(final Context context) {
+        return Observable.create(new ObservableOnSubscribe<List<Course>>() {
+            @Override
+            public void subscribe(ObservableEmitter<List<Course>> e) throws Exception {
+                    getLocalDatabaseData(context);
+                    // 如果本地数据库没有数据，则从网络上获取
+                    if (courses.size() == 0) {
+                        System.out.println("size == 0");
+                        String error = getCourseData(context);
+                        if (error != null) {
+                            e.onError(new Throwable(error));
+                            return ;
+                        }
+                    }
                 e.onNext(courses);
             }
         }).subscribeOn(Schedulers.io());
@@ -94,19 +116,43 @@ public class CurriculumScheduleService {
      * @param date
      * @return
      */
-    public static List<TodoItem> getTodoList(Date date) {
-        String timeFormat = "第%d节课";
-        List<TodoItem> todoItems = new ArrayList<>();
-        if (courses == null) {
-            return todoItems;
-        }
-        int day = date.getDay();
-        for (Course course : courses) {
-            if (course.getDay() == day) {
-                todoItems.add(new TodoItem(course.getCourseName(), course.getVenue(), String.format(timeFormat, course.getBegin()), String.format(timeFormat, course.getEnd())));
+//    public static List<TodoItem> getTodoList(Date date) {
+//        String timeFormat = "第%d节课";
+//        List<TodoItem> todoItems = new ArrayList<>();
+//        if (courses == null) {
+//            return todoItems;
+//        }
+//        int day = date.getDay();
+//        for (Course course : courses) {
+//            if (course.getDay() == day) {
+//                todoItems.add(new TodoItem(course.getCourseName(), course.getVenue(), String.format(timeFormat, course.getBegin()), String.format(timeFormat, course.getEnd())));
+//            }
+//        }
+//        return todoItems;
+//    }
+    public static Observable<ArrayList<TodoItem>> getTodoList (final Context context,final Date date){
+        return Observable.create(new ObservableOnSubscribe<ArrayList<TodoItem>>() {
+            @Override
+            public void subscribe(@NonNull ObservableEmitter<ArrayList<TodoItem>> e) throws Exception {
+                String timeFormat = "第%d节课";
+                ArrayList<TodoItem> todoItems = new ArrayList<>();
+                if (courses == null) {
+                    courses = new ArrayList<Course>();
+                    getCoursesToDo(context)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe();
+                    System.out.println("gettheCourecs");
+                }
+                int day = date.getDay();
+                for (Course course : courses) {
+                    if (course.getDay()+1 == day) {
+                        System.out.println(course.getCourseName()+"dddddd");
+                        todoItems.add(new TodoItem(course.getCourseName(), course.getVenue(), String.format(timeFormat, course.getBegin()), String.format(timeFormat, course.getEnd())));
+                    }
+                }
+                e.onNext(todoItems);
             }
-        }
-        return todoItems;
+        }).subscribeOn(Schedulers.io());
     }
 
     /**
@@ -218,6 +264,7 @@ public class CurriculumScheduleService {
                     cursor.getInt(endIndex)
             );
             courses.add(course);
+            System.out.println(course.getCourseName()+"    本地");
         }
         cursor.close();
         db.close();
