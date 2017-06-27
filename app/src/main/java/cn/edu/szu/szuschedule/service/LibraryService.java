@@ -112,6 +112,9 @@ public class LibraryService {
      */
     public static List<TodoItem> getTodoList(Date date) {
         List<TodoItem> todoItems = new ArrayList<>();
+        if (bookItems == null) {
+            return todoItems;
+        }
         for (BookItem bookItem : bookItems) {
             if (bookItem.getEndDate().equals(date.toString())) {
                 todoItems.add(new TodoItem("还书", bookItem.getBookName(), "00:00", "23:59"));

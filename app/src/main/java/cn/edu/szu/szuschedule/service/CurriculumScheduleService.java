@@ -97,6 +97,9 @@ public class CurriculumScheduleService {
     public static List<TodoItem> getTodoList(Date date) {
         String timeFormat = "第%d节课";
         List<TodoItem> todoItems = new ArrayList<>();
+        if (courses == null) {
+            return todoItems;
+        }
         int day = date.getDay();
         for (Course course : courses) {
             if (course.getDay() == day) {
