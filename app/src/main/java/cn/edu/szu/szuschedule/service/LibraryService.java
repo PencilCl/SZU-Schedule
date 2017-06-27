@@ -99,6 +99,7 @@ public class LibraryService {
                 }
 
                 getDataFromNetwork(context, e);// 从网络中获取
+                e.onNext(bookItems);
                // System.out.println("更新图书信息");
             }
         }).subscribeOn(Schedulers.io());

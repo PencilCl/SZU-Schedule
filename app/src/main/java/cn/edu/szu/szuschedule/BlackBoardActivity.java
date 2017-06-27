@@ -21,6 +21,8 @@ import cn.edu.szu.szuschedule.service.UserService;
 import cn.edu.szu.szuschedule.util.LoadingUtil;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
@@ -35,6 +37,8 @@ public class BlackBoardActivity extends AppCompatActivity {
     TabLayout tabLayout;
     LoadingUtil loadingUtil;
     ArrayList<SubjectItem> subjectItems;
+
+    ViewPagerAdapter adapter;
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -55,28 +59,18 @@ public class BlackBoardActivity extends AppCompatActivity {
         tabLayout.getTabAt(0).setText(R.string.bb_homework_list);
         tabLayout.getTabAt(1).setText(R.string.bb_subject_list);
 
+        //获得科目内容
         loadingUtil = new LoadingUtil(this);
-        getCourses();
+
     }
 
     private void initViewPager() {
-        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        adapter = new ViewPagerAdapter(getSupportFragmentManager());
         adapter.addFragment(new HomeworkListFragment());
         adapter.addFragment(new SubjectListFragment());
         viewPager.setAdapter(adapter);
     }
-    private  void getCourses(){
-        loadingUtil.showLoading();
-        User user = UserService.getCurrentUser();
-        BBService.loginBB(user.getAccount(),user.getPassword())
-                .flatMap(new Function<String, ObservableSource<ArrayList<SubjectItem>>>() {
-                    @Override
-                    public ObservableSource<ArrayList<SubjectItem>> apply( String s) throws Exception {
-                        return BBService.getAllCourses(BlackBoardActivity.this);
-                    }
-                })
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe();
 
-    }
+
+
 }

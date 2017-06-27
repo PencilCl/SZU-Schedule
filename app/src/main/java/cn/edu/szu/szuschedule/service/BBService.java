@@ -29,6 +29,7 @@ import com.lzy.okrx2.adapter.ObservableBody;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.Response;
@@ -100,7 +101,7 @@ public class BBService {
                 bbService.webView.setWebViewClient(new SZUAuthenticationWebViewClient(username, password, e, loginPageUrl, bbUrl));
                 bbService.webView.loadUrl(enterBBUrl);
             }
-        });
+        }).subscribeOn(AndroidSchedulers.mainThread());
     }
 
     /**
@@ -145,20 +146,38 @@ public class BBService {
                     e.onNext(subjectItems);
                     return;
                 }
-//                getLocalDatabaseData(context);
+                getLocalDatabaseData(context);
                 // 如果本地数据为空，则从网络中获取
-                getDataFromNetwork(context);
-//                if (courseItem.size() == 0) {
-//                    String error = getDataFromNetwork(context);
-//                    if (error == null) {
-//                        e.onNext(courseItem);
-//                    } else {
-//                        e.onError(new Throwable(error));
-//                    }
-//                } else {
-//                    e.onNext(courseItem);
-//                }
+                if (subjectItems.size() == 0) {
+                    String error = getDataFromNetwork(context);
+                    if (error == null) {
+                        e.onNext(subjectItems);
+                    } else {
+                        e.onError(new Throwable(error));
+                    }
+                } else {
+                    e.onNext(subjectItems);
+                }
             }
+        }).subscribeOn(Schedulers.io());
+    }
+
+    public static Observable<ArrayList<SubjectItem>> updateAllCourses(final Context context) {
+        return Observable.create(new ObservableOnSubscribe<ArrayList<SubjectItem>>() {
+            @Override
+            public void subscribe(ObservableEmitter<ArrayList<SubjectItem>> e) throws Exception {
+                if(subjectItems  == null){
+                    subjectItems = new ArrayList<>();
+                }
+                System.out.println("updateAllCoures");
+                    String error = getDataFromNetwork(context);
+                    if (error == null) {
+                        e.onNext(subjectItems);
+                    } else {
+                        e.onError(new Throwable(error));
+                    }
+                }
+
         }).subscribeOn(Schedulers.io());
     }
     //从本地获取数据
@@ -169,7 +188,7 @@ public class BBService {
         int subjectNameIndex = cursor.getColumnIndex("subjectName");
         int courseNumIndex = cursor.getColumnIndex("courseNum");
         int termNumIndex = cursor.getColumnIndex("termNum");
-        int courseIDIndex = cursor.getColumnIndex("courseID");
+        int courseIDIndex = cursor.getColumnIndex("courseId");
         while(cursor.moveToNext()){
             SubjectItem subjectItem = new SubjectItem(
                     cursor.getInt(idIndex),
@@ -204,33 +223,37 @@ public class BBService {
             Pattern pattern = Pattern.compile("<a href=\"(.*?)\".*>(.*?)</a>");
             Matcher matcher = pattern.matcher(html);
             SQLiteDatabase db = DBHelper.getDB(context);
-
+            //清空原有数据
+            db.execSQL("DELETE FROM subject");
+            subjectItems.clear();
             while(matcher.find()){
                 String link = matcher.group(1).trim();
                 String info = matcher.group(2).trim();
                 String courseName = info.substring(info.indexOf(":") + 2);
                 String termNum = info.substring(0, 5);
                 String courseNum = info.substring(6, info.indexOf(":"));
-//                SubjectItem course = new SubjectItem(-1,courseName,courseNum,termNum);
+                String[] str = link.split("%3D");
+                String courseId = str[str.length-1].split("%26")[0];
+                SubjectItem course = new SubjectItem(-1,courseName,courseId,courseNum,termNum);
                 ContentValues cv = new ContentValues();
                 cv.put("subjectName",courseName);
                 cv.put("courseNum",courseNum);
                 cv.put("termNum",termNum);
+                cv.put("courseId",courseId);
                 db.insert("subject",null,cv);
                 // 获取最后插入的记录id
                 Cursor cursor = db.rawQuery("select last_insert_rowid() from subject", null);
                 int lastId = 0;
                 if(cursor.moveToFirst()) lastId = cursor.getInt(0);
                 cursor.close();
-//                course.setId(lastId);
-//                courseItem.add(course);
+                course.setId(lastId);
+                subjectItems.add(course);
                 System.out.println(String.format("学期号: %s\n课程名: %s\n课程号: %s\n链接: %s", termNum, courseName, courseNum, link));
                 System.out.println("------------------------------");
-                String ss = "/webapps/portal/frameset.jsp?tab_tabgroup_id=_2_1&url=%2Fwebapps%2Fblackboard%2Fexecute%2Flauncher%3Ftype%3DCourse%26id%3D_29748_1%26url%3D";
-                String[] str = ss.split("%3D");
-                String end = str[str.length-1].split("%26")[0];
-                System.out.println("zhengzhe    "+end);
+
             }
+            return null;
+
         }catch (Exception e){
             e.printStackTrace();
         }
