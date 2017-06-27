@@ -7,20 +7,25 @@ import android.view.View;
  */
 
 public class BBCourseItem {
+    private  int id;
     private String subjectName;
-    private Homework homeworkItem;
+    private BBHomework homeworkItem;
     private OnClickListener onClickListener;
+    private String termNum;
+    private String courseNum;
 
-
-    public BBCourseItem(String sub, Homework home, OnClickListener onClickListener){
+    public BBCourseItem(int id,String sub,String courseNum,String termNum, BBHomework home, OnClickListener onClickListener){
+        this.id = id;
         this.subjectName = sub;
         this.homeworkItem = home;
+        this.courseNum = courseNum;
+        this.termNum = termNum;
         this.onClickListener = onClickListener;
     }
 
     public String getSubjectName(){ return subjectName;}
 
-    public Homework getHomeworkItem()   {   return homeworkItem;}
+    public BBHomework getHomeworkItem()   {   return homeworkItem;}
 
     public OnClickListener getOnClickListener() {
         return onClickListener;
@@ -29,4 +34,12 @@ public class BBCourseItem {
     public interface OnClickListener {
         void onClick(View view, BBCourseItem bbCourseItem);
     }
+
+    public String getTermNum()  { return termNum;}
+
+    public String getCourseNum()    {   return courseNum;}
+
+    public void setId(int dd){  id = dd;  }
+
+    public int getId()  { return  id;}
 }

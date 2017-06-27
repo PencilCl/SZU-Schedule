@@ -6,11 +6,26 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.*;
 import android.os.Bundle;
 import android.view.*;
+
+import java.util.ArrayList;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import cn.edu.szu.szuschedule.adapter.BooksAdapter;
 import cn.edu.szu.szuschedule.adapter.ViewPagerAdapter;
 import cn.edu.szu.szuschedule.fragment.SubjectListFragment;
 import cn.edu.szu.szuschedule.fragment.HomeworkListFragment;
+import cn.edu.szu.szuschedule.object.BBCourseItem;
+import cn.edu.szu.szuschedule.object.BookItem;
+import cn.edu.szu.szuschedule.object.User;
+import cn.edu.szu.szuschedule.service.BBService;
+import cn.edu.szu.szuschedule.service.UserService;
+import cn.edu.szu.szuschedule.util.LoadingUtil;
+import io.reactivex.ObservableSource;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
@@ -22,7 +37,8 @@ public class BlackBoardActivity extends AppCompatActivity {
     ViewPager viewPager;
     @Bind(R.id.tabLayout)
     TabLayout tabLayout;
-
+    LoadingUtil loadingUtil;
+    ArrayList<BBCourseItem> bbCourseItems;
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -42,6 +58,9 @@ public class BlackBoardActivity extends AppCompatActivity {
         tabLayout.setupWithViewPager(viewPager);
         tabLayout.getTabAt(0).setText(R.string.bb_homework_list);
         tabLayout.getTabAt(1).setText(R.string.bb_subject_list);
+
+        loadingUtil = new LoadingUtil(this);
+        getCourses();
     }
 
     private void initViewPager() {
@@ -49,5 +68,19 @@ public class BlackBoardActivity extends AppCompatActivity {
         adapter.addFragment(new HomeworkListFragment());
         adapter.addFragment(new SubjectListFragment());
         viewPager.setAdapter(adapter);
+    }
+    private  void getCourses(){
+        loadingUtil.showLoading();
+        User user = UserService.getCurrentUser();
+        BBService.loginBB(user.getAccount(),user.getPassword())
+                .flatMap(new Function<String, ObservableSource<ArrayList<BBCourseItem>>>() {
+                    @Override
+                    public ObservableSource<ArrayList<BBCourseItem>> apply( String s) throws Exception {
+                        return BBService.getAllCourses(BlackBoardActivity.this);
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe();
+
     }
 }

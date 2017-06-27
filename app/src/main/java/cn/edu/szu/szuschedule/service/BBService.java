@@ -1,6 +1,10 @@
 package cn.edu.szu.szuschedule.service;
 
 import android.app.Application;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 
@@ -8,6 +12,9 @@ import cn.edu.szu.szuschedule.util.CommonUtil;
 import cn.edu.szu.szuschedule.util.SZUAuthenticationWebViewClient;
 import com.lzy.okgo.OkGo;
 
+import java.io.OutputStream;
+import java.net.Socket;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,8 +23,11 @@ import com.lzy.okrx2.adapter.ObservableBody;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import cn.edu.szu.szuschedule.object.BBCourseItem;
+import java.util.ArrayList;
 
 /**
  * Created by chenlin on 14/06/2017.
@@ -29,12 +39,13 @@ public class BBService {
     private final static String enterBBUrl = "http://elearning.szu.edu.cn/webapps/cbb-sdgxtyM-BBLEARN/checksession.jsp";
     private final static String bbUrl = "http://elearning.szu.edu.cn/webapps/portal/frameset.jsp"; // 成功进入bb的页面
     private final static String stuNumUrl = "http://elearning.szu.edu.cn/webapps/blackboard/execute/editUser?context=self_modify"; // 获取学号url
+    private final static String courseUrl = "http://elearning.szu.edu.cn/webapps/portal/execute/tabs/tabAction";
 
     private final static String stuNumReg = "<input.*id=\"studentId\".*value=\"(.*?)\".*/>";
     private static Pattern stuNumPattern;
 
     private WebView webView;
-
+    private static ArrayList<BBCourseItem> courseItem;
     private BBService() {
         stuNumPattern = Pattern.compile(stuNumReg);
     }
@@ -96,5 +107,105 @@ public class BBService {
                     }
                 })
                 .subscribeOn(Schedulers.io());
+    }
+    public static Observable<ArrayList<BBCourseItem>> getAllCourses(final Context context) {
+        return Observable.create(new ObservableOnSubscribe<ArrayList<BBCourseItem>>() {
+            @Override
+            public void subscribe(ObservableEmitter<ArrayList<BBCourseItem>> e) throws Exception {
+                if(courseItem  == null){
+                    courseItem = new ArrayList<>();
+                } else{
+                    e.onNext(courseItem);
+                    return;
+                }
+//                getLocalDatabaseData(context);
+                // 如果本地数据为空，则从网络中获取
+                getDataFromNetwork(context);
+//                if (courseItem.size() == 0) {
+//                    String error = getDataFromNetwork(context);
+//                    if (error == null) {
+//                        e.onNext(courseItem);
+//                    } else {
+//                        e.onError(new Throwable(error));
+//                    }
+//                } else {
+//                    e.onNext(courseItem);
+//                }
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+    //从本地获取数据
+    private  static void getLocalDatabaseData(Context context){
+        SQLiteDatabase db = DBHelper.getDB(context);
+        Cursor cursor = db.rawQuery("SELECT * FROM subject",null);
+        int idIndex = cursor.getColumnIndex("id");
+        int subjectNameIndex = cursor.getColumnIndex("subjectName");
+        int courseNumIndex = cursor.getColumnIndex("courseNum");
+        int termNumIndex = cursor.getColumnIndex("termNum");
+        while(cursor.moveToNext()){
+            BBCourseItem bbCourseItem = new BBCourseItem(
+                    cursor.getInt(idIndex),
+                    cursor.getString(subjectNameIndex),
+                    cursor.getString(courseNumIndex),
+                    cursor.getString(termNumIndex),
+                    null,null
+                    );
+            System.out.println("本地获取      "+ bbCourseItem.getCourseNum());
+
+            courseItem.add(bbCourseItem);
+        }
+        cursor.close();
+        db.close();
+    }
+    //从外网获取
+    private  static String getDataFromNetwork(Context context){
+        CookieManager cookieManager = CookieManager.getInstance();
+        if(cookieManager.getCookie(courseUrl) == null){
+            return "获取课程信息失败";
+        }
+        try{
+
+            okhttp3.Response response = OkGo.post(courseUrl)
+                    .headers("Cookie",cookieManager.getCookie(baseUrl))
+                    .params("action","refreshAjaxModule")
+                    .params("modId","_25_1")
+                    .params("tabId","_2_1")
+                    .params("tab_tab_group_id","_2_1")
+                    .execute();
+            String html = response.body().string();
+            Pattern pattern = Pattern.compile("<a href=\"(.*?)\".*>(.*?)</a>");
+            Matcher matcher = pattern.matcher(html);
+            SQLiteDatabase db = DBHelper.getDB(context);
+
+            while(matcher.find()){
+                String link = matcher.group(1).trim();
+                String info = matcher.group(2).trim();
+                String courseName = info.substring(info.indexOf(":") + 2);
+                String termNum = info.substring(0, 5);
+                String courseNum = info.substring(6, info.indexOf(":"));
+                BBCourseItem course = new BBCourseItem(-1,courseName,courseNum,termNum,null,null);
+                ContentValues cv = new ContentValues();
+                cv.put("subjectName",courseName);
+                cv.put("courseNum",courseNum);
+                cv.put("termNum",termNum);
+                db.insert("subject",null,cv);
+                // 获取最后插入的记录id
+                Cursor cursor = db.rawQuery("select last_insert_rowid() from subject", null);
+                int lastId = 0;
+                if(cursor.moveToFirst()) lastId = cursor.getInt(0);
+                cursor.close();
+                course.setId(lastId);
+                courseItem.add(course);
+                System.out.println(String.format("学期号: %s\n课程名: %s\n课程号: %s\n链接: %s", termNum, courseName, courseNum, link));
+                System.out.println("------------------------------");
+                String ss = "/webapps/portal/frameset.jsp?tab_tabgroup_id=_2_1&url=%2Fwebapps%2Fblackboard%2Fexecute%2Flauncher%3Ftype%3DCourse%26id%3D_29748_1%26url%3D";
+                String[] str = ss.split("%3D");
+                String end = str[str.length-1].split("%26")[0];
+                System.out.println("zhengzhe    "+end);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return "发生未知错误";
     }
 }

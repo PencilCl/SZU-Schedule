@@ -41,7 +41,9 @@ public class DBHelper extends SQLiteOpenHelper {
         String subjectTable = "CREATE TABLE `subject` (" +
                 "`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "`subjectName` varchar(255) NOT NULL," +
-                "`homeworkID` int(11) NOT NULL," +
+                "`courseNum` varchar(255) NOT NULL"  +
+                "`termNum` varchar(255) NOT NULL"  +
+                "`homeworkID` int(11) DEFAULT NULL," +
                 "FOREIGN KEY (`homeworkID`) REFERENCES `subjecthomework` (`id`))";
 
         String homeworkTable = "CREATE TABLE `homework` (" +
