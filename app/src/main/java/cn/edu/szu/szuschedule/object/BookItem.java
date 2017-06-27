@@ -7,7 +7,7 @@ public class BookItem {
     private String book_Name;
     private String return_DeadLine;
 
-    public BookItem(int id, User user, String bookName, String startDate, String endDate) {
+    public BookItem(int id, User user, String book_Name, String borrow_Time, String return_DeadLine) {
         this.id = id;
         this.user = user;
         this.borrow_Time = borrow_Time;
