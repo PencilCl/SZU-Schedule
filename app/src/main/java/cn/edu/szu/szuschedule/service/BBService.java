@@ -8,12 +8,17 @@ import android.database.sqlite.SQLiteDatabase;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 
+import cn.edu.szu.szuschedule.object.Attachment;
+import cn.edu.szu.szuschedule.object.Homework;
 import cn.edu.szu.szuschedule.object.SubjectItem;
 import cn.edu.szu.szuschedule.util.CommonUtil;
 import cn.edu.szu.szuschedule.util.SZUAuthenticationWebViewClient;
 import com.lzy.okgo.OkGo;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,6 +29,7 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.Response;
 
 /**
  * Created by chenlin on 14/06/2017.
@@ -42,6 +48,8 @@ public class BBService {
 
     private WebView webView;
     private static ArrayList<SubjectItem> subjectItems;
+    private static HashMap<SubjectItem, List<Homework>> subjectItemListHashMap;
+    private static HashMap<Homework, List<Attachment>> homeworkListHashMap;
     private BBService() {
         stuNumPattern = Pattern.compile(stuNumReg);
     }
@@ -61,6 +69,7 @@ public class BBService {
         // 初始化WebView
         this.webView = new WebView(app);
         CommonUtil.initWebView(this.webView);
+        subjectItemListHashMap = new HashMap<>();
     }
 
     /**
@@ -204,5 +213,222 @@ public class BBService {
             e.printStackTrace();
         }
         return "发生未知错误";
+    }
+
+    /**
+     * 通过课程获取相应的作业信息
+     * @return
+     */
+    public static Observable<List<Homework>> getHomework(final Context context, final SubjectItem subjectItem) {
+        return Observable.create(new ObservableOnSubscribe<List<Homework>>() {
+            @Override
+            public void subscribe(ObservableEmitter<List<Homework>> e) throws Exception {
+                List<Homework> homeworkList = subjectItemListHashMap.get(subjectItem);
+                if (homeworkList != null) {
+                    e.onNext(homeworkList);
+                    return ;
+                }
+                // 从本地数据库获取数据
+                homeworkList = getHomeworkFromLocalDatabase(context, subjectItem);
+                if (homeworkList.size() != 0) {
+                    subjectItemListHashMap.put(subjectItem, homeworkList);
+                    e.onNext(homeworkList);
+                    return ;
+                }
+                // 从网络获取数据
+                homeworkList = getHomeworkFromNetwork(context, subjectItem);
+                if (homeworkList == null) {
+                    e.onError(new Throwable("获取作业信息失败"));
+                } else {
+                    subjectItemListHashMap.put(subjectItem, homeworkList);
+                    e.onNext(homeworkList);
+                }
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+
+    /**
+     * 从本地数据库获取指定科目的作业列表
+     * @param context
+     * @param subjectItem
+     * @return
+     */
+    private static List<Homework> getHomeworkFromLocalDatabase(Context context, SubjectItem subjectItem) {
+        List<Homework> homeworkList = new ArrayList<>();
+        SQLiteDatabase db = DBHelper.getDB(context);
+        Cursor cursor = db.rawQuery("select homework.* from subjectHomeworkMap inner join homework on subjectHomeworkMap.subjectID = ? and homework.id = subjectHomeworkMap.homeworkID", new String[]{String.valueOf(subjectItem.getId())});
+        int idIndex = cursor.getColumnIndex("id");
+        int homeworkNameIndex = cursor.getColumnIndex("homeworkName");
+        int descriptionIndex = cursor.getColumnIndex("description");
+        int scoreIndex = cursor.getColumnIndex("score");
+        int deadlineIndex = cursor.getColumnIndex("deadline");
+
+        while (cursor.moveToNext()) {
+            Homework homework = new Homework(
+                    cursor.getInt(idIndex),
+                    cursor.getString(homeworkNameIndex),
+                    cursor.getString(descriptionIndex),
+                    cursor.getInt(scoreIndex),
+                    cursor.getString(deadlineIndex)
+            );
+            homeworkList.add(homework);
+        }
+        return homeworkList;
+    }
+
+    /**
+     * 从网络上获取指定课程的作业列表
+     * 并保存到数据库中
+     * @param context
+     * @param subjectItem
+     * @return 成功返回作业数组, 失败返回null
+     */
+    private static List<Homework> getHomeworkFromNetwork(Context context, SubjectItem subjectItem) {
+        String cookie = CookieManager.getInstance().getCookie(baseUrl);
+        try {
+            List<Homework> homeworkList = new ArrayList<>();
+            Response response = OkGo.<String>get(String.format("http://elearning.szu.edu.cn/webapps/blackboard/execute/modulepage/view?course_id=%s&mode=view", subjectItem.getCourseId()))
+                    .headers("Cookie", cookie)
+                    .execute();
+            String html = response.body().string();
+            Pattern pattern = Pattern.compile("<a href=\"(.*?)\" target=\"_self\"><span title=\"网上作业\">网上作业</span></a>");
+            Matcher matcher = pattern.matcher(html);
+            if (!matcher.find()) {
+                // 找不到网上作业的地址，说明该课程没有作业。直接返回空数组
+                return homeworkList;
+            }
+            String homeworkUrl = matcher.group(1);
+            response = OkGo.<String>get(homeworkUrl)
+                    .headers("Cookie", cookie)
+                    .execute();
+            html = response.body().string();
+            pattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?(<ul class=\"attachments clearfix\">([\\w\\W]*?)</ul>)?[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
+            matcher = pattern.matcher(html);
+            SQLiteDatabase db = DBHelper.getDB(context);
+            while (matcher.find()) {
+                List<Attachment> attachments = new ArrayList<>();
+                String singleHomeworkHtml = matcher.group(0);
+                Pattern singleHomeworkPattern;
+                boolean hasAttachment = singleHomeworkHtml.contains("<th scope=\"row\">已附加文件:</th>");
+                if (hasAttachment) {
+                    singleHomeworkPattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?<ul class=\"attachments clearfix\">([\\w\\W]*?)</ul>[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
+                } else {
+                    singleHomeworkPattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
+                }
+
+                Matcher singleHomeworkMatcher = singleHomeworkPattern.matcher(singleHomeworkHtml);
+                if (!singleHomeworkMatcher.find()) {
+                    System.out.println("not found");
+                    continue;
+                }
+                System.out.println(String.format("实验名: %s", singleHomeworkMatcher.group(2)));
+                System.out.println(String.format("实验地址: %s", singleHomeworkMatcher.group(1)));
+
+                if (hasAttachment) {
+                    Pattern attachmentPattern = Pattern.compile("<a href=\"([\\w\\W]*?)\" target=\"_blank\">[\\w\\W]*?&nbsp;([\\w\\W]*?)</a>");
+                    Matcher attachmentMatcher = attachmentPattern.matcher(singleHomeworkMatcher.group(3));
+                    while (attachmentMatcher.find()) {
+                        attachments.add(new Attachment(-1, attachmentMatcher.group(2), attachmentMatcher.group(1)));
+                        System.out.println(String.format("附件名: %s\n附件链接: %s", attachmentMatcher.group(2), attachmentMatcher.group(1)));
+                    }
+                }
+                System.out.println(String.format("实验要求: \n%s", singleHomeworkMatcher.group(hasAttachment ? 4 : 3).replaceAll("</div>", "\n").replaceAll("<div>", "").trim())); // 过滤div标签
+                System.out.println("--------------------------------------------------");
+
+                response = OkGo.<String>get(singleHomeworkMatcher.group(1))
+                        .headers("Cookie", cookie)
+                        .execute();
+                html = response.body().string();
+                String deadline = null;
+                int score = -1;
+                Pattern deadlinePattern = Pattern.compile("id=\"dueDate\" value=\"(.*?)\"");
+                matcher = deadlinePattern.matcher(html);
+                if (matcher.find()) {
+                    deadline = matcher.group(1);
+                }
+
+                String scoreHtml = "{\n" +
+                        "    \"itemListHtml\": \"  \\t  <h4>提交资料</h4>\\r\\n<p>\\r\\n 提交字段 :   \\r\\n \\t    </p>\\r\\n<p>\\r\\n 学生注释 :   \\r\\n \\t      </p>\\r\\n<p>\\r\\n 已附加文件 :   \\r\\n \\t <a href=\\\"/@@/B12706399799B8AE4C0C4BBF99490620/courses/1/20162-1500720006/attempt/_802053_1/s/%E5%AE%9E%E9%AA%8C1%2B2015150063%20.doc\\\"  target=\\\"_blank\\\" >  实验1+2015150063 .doc   </a> &nbsp; </p>\\r\\n \\t  <h4>教师反馈</h4>\\r\\n<p>\\r\\n 成绩 :   \\r\\n \\t  100.00 超出 100    </p>\\r\\n<p>\\r\\n 注释 :   \\r\\n \\t  <div class=\\\"vtbegenerated\\\">同学的最终实现效果非常好，在Visio的各种限制之下能够使用原生组件实现出美观的界面实属不易。另外，Visio在实际生产中更多的是一款生成流程图表的软件，所以在界面设计中确实存在诸多不足。在实际生产时的界面设计中，可以使用更专业更具有指向性的软件来进行设计。\\r\\n\\r\\n</div>    </p>\\r\\n<p>\\r\\n 已附加文件 :   \\r\\n \\t <a href=\\\"/@@/B12706399799B8AE4C0C4BBF99490620/courses/1/20162-1500720006/attempt/_802053_1/c/2015150063%E9%99%88%E6%9E%97%20-%20%E5%AE%9E%E9%AA%8C1%E8%BD%AF%E4%BB%B6%E7%95%8C%E9%9D%A2%E8%AE%BE%E8%AE%A1.doc\\\"  target=\\\"_blank\\\" >  2015150063陈林 - 实验1软件界面设计.doc   </a> &nbsp; </p>\\r\\n\",\n" +
+                        "    \"success\": \"true\"\n" +
+                        "}";
+                Pattern scorePattern = Pattern.compile("成绩 :.*?([0-9.]*?) 超出");
+                matcher = scorePattern.matcher(scoreHtml);
+                if (matcher.find()) {
+                    score = Integer.valueOf(matcher.group(1).trim());
+                }
+                Homework homework = new Homework(
+                        -1,
+                        singleHomeworkMatcher.group(2),
+                        singleHomeworkMatcher.group(hasAttachment ? 4 : 3).replaceAll("</div>", "\n").replaceAll("<div>", "").trim(),
+                        score,
+                        deadline);
+                homeworkListHashMap.put(homework, attachments);
+                saveHomeworkToDatabase(db, homework, subjectItem, attachments);
+                homeworkList.add(homework);
+            }
+            db.close();
+            return homeworkList;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 保存作业信息到数据库中
+     * @param db
+     * @param homework
+     * @param subjectItem
+     * @param attachments
+     */
+    private static void saveHomeworkToDatabase(SQLiteDatabase db, Homework homework, SubjectItem subjectItem, List<Attachment> attachments) {
+        // 保存到homework表中
+        ContentValues cv = new ContentValues();
+        cv.put("homeworkName", homework.getName());
+        cv.put("description", homework.getDescription());
+        cv.put("deadline", homework.getDeadline());
+        cv.put("score", homework.getScore());
+        db.insert("homework", null, cv);
+        // 获取最后插入的记录id
+        Cursor cursor = db.rawQuery("select last_insert_rowid() from homework", null);
+        int lastId = 0;
+        if (cursor.moveToFirst()) lastId = cursor.getInt(0);
+        cursor.close();
+        homework.setId(lastId);
+
+        // 保存附件列表
+        for (Attachment attachment : attachments) {
+            cv = new ContentValues();
+            cv.put("attachmentName", attachment.getName());
+            cv.put("attachmentUrl", attachment.getUrl());
+            db.insert("attachment", null, cv);
+            // 获取最后插入的记录id
+            cursor = db.rawQuery("select last_insert_rowid() from attachment", null);
+            lastId = 0;
+            if (cursor.moveToFirst()) lastId = cursor.getInt(0);
+            cursor.close();
+            attachment.setId(lastId);
+            cursor.close();
+            // 保存到homeworkAttachmentMap表中
+            cv = new ContentValues();
+            cv.put("homeworkID", homework.getId());
+            cv.put("attachmentID", lastId);
+            db.insert("homeworkAttachmentMap", null, cv);
+        }
+
+        // 保存到subjectHomeworkMap表中
+        cv = new ContentValues();
+        cv.put("subjectID", subjectItem.getId());
+        cv.put("homeworkID", homework.getId());
+        db.insert("subjectHomeworkMap", null, cv);
+    }
+
+    /**
+     * 获取作业的附件列表
+     * @param homework
+     * @return
+     */
+    public static List<Attachment> getAttachments(Homework homework) {
+        return homeworkListHashMap.get(homework);
     }
 }
