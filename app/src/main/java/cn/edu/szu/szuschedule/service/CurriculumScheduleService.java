@@ -57,6 +57,25 @@ public class CurriculumScheduleService {
     }
 
     /**
+     * 清除当前用户所有课程表信息
+     * @param context
+     * @return
+     */
+    public static void clearCourses(Context context) {
+        courses = null;
+        SQLiteDatabase db = DBHelper.getDB(context);
+        String userId = String.valueOf(UserService.getCurrentUser().getId());
+        Cursor cursor = db.rawQuery("select lesson.id from schedule inner join lesson on schedule.studentID = ? and lesson.id = schedule.lessonID", new String[]{userId});
+        while (cursor.moveToNext()) {
+            String lessonId = cursor.getString(cursor.getColumnIndex("id"));
+            db.delete("schedule", "studentID = ? and lessonID = ?", new String[]{userId, lessonId});
+            db.delete("lesson", "id=?", new String[]{lessonId});
+        }
+        cursor.close();
+        db.close();
+    }
+
+    /**
      * 更改课程的上课地点
      * @param context
      * @param course

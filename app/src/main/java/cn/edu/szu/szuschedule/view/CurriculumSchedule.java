@@ -78,6 +78,15 @@ public class CurriculumSchedule extends GridLayout implements View.OnClickListen
     }
 
     /**
+     * 删除所有课程
+     */
+    public void removeAllCourses() {
+        for (TextView textView : textViewCourseHashMap.keySet()) {
+            removeView(textView);
+        }
+    }
+
+    /**
      * 更新course信息
      * @param course
      */
