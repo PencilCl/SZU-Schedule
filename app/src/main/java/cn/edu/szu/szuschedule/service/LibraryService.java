@@ -85,7 +85,6 @@ public class LibraryService {
                 }
 
                 getLocalDatabaseData(context);// 从本地数据库中获取
-
                 // 如果本地数据为空，则从网络中获取
                 if (bookItems.size() == 0) {
                     String error = getDataFromNetwork(context);
@@ -102,6 +101,24 @@ public class LibraryService {
     }
 
     /**
+     * 通过图书馆（外网）获取当前用户借阅图书列表
+     * @return 失败抛出异常，成功返回图书列表
+     */
+    public static Observable<ArrayList<BookItem>> updateBorrowedBooks(final Context context) {
+        return Observable.create(new ObservableOnSubscribe<ArrayList<BookItem>>() {
+            @Override
+            public void subscribe(ObservableEmitter<ArrayList<BookItem>> e) throws Exception {
+                if (bookItems == null) {
+                    bookItems = new ArrayList<>();
+                }
+
+                getDataFromNetwork(context);// 从网络中获取中获取
+               // System.out.println("更新图书信息");
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+
+    /**
      * 从网络上获取借阅数据
      * 并保存到数据库中
      * @return 成功返回null 失败返回错误信息;
@@ -112,6 +129,8 @@ public class LibraryService {
             return "登录信息失效";
         }
         try {
+
+
             okhttp3.Response response = OkGo.get(booksUrl)
                     .headers("Cookie", cookieManager.getCookie(booksUrl))
                     .execute();
@@ -119,6 +138,9 @@ public class LibraryService {
             Pattern pattern = Pattern.compile(reg, Pattern.CASE_INSENSITIVE);
             Matcher matcher = pattern.matcher(html);
             SQLiteDatabase db = DBHelper.getDB(context);
+            //清空原来的内容
+            bookItems.clear();
+            db.execSQL("delete from library");
             while(matcher.find()) {
                 BookItem book = new BookItem(-1, UserService.getCurrentUser(), matcher.group(2), matcher.group(3), matcher.group(1));
                 ContentValues cv = new ContentValues();
@@ -133,7 +155,7 @@ public class LibraryService {
                 if (cursor.moveToFirst()) lastId = cursor.getInt(0);
                 cursor.close();
                 book.setId(lastId);
-
+                System.out.println("外网    "+book.getBook_Name()+"    "+book.getUserName()+"     "+book.getBorrow_Time()+"'''''''''''''''''''''");
                 bookItems.add(book);
             }
             db.close();
@@ -164,6 +186,8 @@ public class LibraryService {
                     cursor.getString(startDateIndex),
                     cursor.getString(endDateIndex)
             );
+            System.out.println("本地    "+bookmark.getBook_Name()+"    "+bookmark.getUserName()+"     "+bookmark.getBorrow_Time()+"'''''''''''''''''''''");
+
             bookItems.add(bookmark);
         }
         cursor.close();
