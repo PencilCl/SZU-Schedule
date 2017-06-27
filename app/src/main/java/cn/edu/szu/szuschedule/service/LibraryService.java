@@ -129,18 +129,7 @@ public class LibraryService {
      * @param date
      * @return
      */
-//    public static List<TodoItem> getTodoList(Date date) {
-//        List<TodoItem> todoItems = new ArrayList<>();
-//        if (bookItems == null) {
-//            return todoItems;
-//        }
-//        for (BookItem bookItem : bookItems) {
-//            if (bookItem.getEndDate().equals(date.toString())) {
-//                todoItems.add(new TodoItem("还书", bookItem.getBookName(), "00:00", "23:59"));
-//            }
-//        }
-//        return todoItems;
-//    }
+
     public static Observable<ArrayList<TodoItem>> getTodoList (final Context context,final Date date){
         return Observable.create(new ObservableOnSubscribe<ArrayList<TodoItem>>() {
             @Override

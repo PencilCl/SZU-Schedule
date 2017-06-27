@@ -116,20 +116,7 @@ public class CurriculumScheduleService {
      * @param date
      * @return
      */
-//    public static List<TodoItem> getTodoList(Date date) {
-//        String timeFormat = "第%d节课";
-//        List<TodoItem> todoItems = new ArrayList<>();
-//        if (courses == null) {
-//            return todoItems;
-//        }
-//        int day = date.getDay();
-//        for (Course course : courses) {
-//            if (course.getDay() == day) {
-//                todoItems.add(new TodoItem(course.getCourseName(), course.getVenue(), String.format(timeFormat, course.getBegin()), String.format(timeFormat, course.getEnd())));
-//            }
-//        }
-//        return todoItems;
-//    }
+
     public static Observable<ArrayList<TodoItem>> getTodoList (final Context context,final Date date){
         return Observable.create(new ObservableOnSubscribe<ArrayList<TodoItem>>() {
             @Override
