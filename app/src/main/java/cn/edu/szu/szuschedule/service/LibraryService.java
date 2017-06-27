@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.webkit.*;
 import cn.edu.szu.szuschedule.object.BookItem;
+import cn.edu.szu.szuschedule.object.TodoItem;
 import cn.edu.szu.szuschedule.object.User;
 import cn.edu.szu.szuschedule.util.SZUAuthenticationWebViewClient;
 import com.lzy.okgo.OkGo;
@@ -22,6 +23,8 @@ import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -99,6 +102,21 @@ public class LibraryService {
                // System.out.println("更新图书信息");
             }
         }).subscribeOn(Schedulers.io());
+    }
+
+    /**
+     * 获取指定日期需要归还的书本
+     * @param date
+     * @return
+     */
+    public static List<TodoItem> getTodoList(Date date) {
+        List<TodoItem> todoItems = new ArrayList<>();
+        for (BookItem bookItem : bookItems) {
+            if (bookItem.getEndDate().equals(date.toString())) {
+                todoItems.add(new TodoItem("还书", bookItem.getBookName(), "00:00", "23:59"));
+            }
+        }
+        return todoItems;
     }
 
     /**

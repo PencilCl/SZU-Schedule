@@ -16,6 +16,7 @@ import cn.edu.szu.szuschedule.view.CurriculumSchedule;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
 
+import java.util.Date;
 import java.util.List;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
@@ -44,6 +45,7 @@ public class CurriculumScheduleActivity extends AppCompatActivity implements Cur
             }
         });
 
+        curriculumSchedule.setCurrentDay(new Date().getDay());
         curriculumSchedule.setOnClickListener(this);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override

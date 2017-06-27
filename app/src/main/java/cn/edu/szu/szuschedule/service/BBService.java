@@ -11,12 +11,14 @@ import android.webkit.WebView;
 import cn.edu.szu.szuschedule.object.Attachment;
 import cn.edu.szu.szuschedule.object.Homework;
 import cn.edu.szu.szuschedule.object.SubjectItem;
+import cn.edu.szu.szuschedule.object.TodoItem;
 import cn.edu.szu.szuschedule.util.CommonUtil;
 import cn.edu.szu.szuschedule.util.SZUAuthenticationWebViewClient;
 import com.lzy.okgo.OkGo;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -63,6 +65,17 @@ public class BBService {
     }
 
     /**
+     * 获取指定日期需要完成的作业
+     * @param date
+     * @return
+     */
+    public static List<TodoItem> getTodoList(Date date) {
+        List<TodoItem> todoItems = new ArrayList<>();
+        // TODO: 28/06/2017
+        return todoItems;
+    }
+
+    /**
      * 初始化BBService
      */
     public void init(Application app) {
@@ -88,6 +101,15 @@ public class BBService {
                 bbService.webView.loadUrl(enterBBUrl);
             }
         });
+    }
+
+    /**
+     * 获取作业的附件列表
+     * @param homework
+     * @return
+     */
+    public static List<Attachment> getAttachments(Homework homework) {
+        return homeworkListHashMap.get(homework);
     }
 
     /**
@@ -421,14 +443,5 @@ public class BBService {
         cv.put("subjectID", subjectItem.getId());
         cv.put("homeworkID", homework.getId());
         db.insert("subjectHomeworkMap", null, cv);
-    }
-
-    /**
-     * 获取作业的附件列表
-     * @param homework
-     * @return
-     */
-    public static List<Attachment> getAttachments(Homework homework) {
-        return homeworkListHashMap.get(homework);
     }
 }

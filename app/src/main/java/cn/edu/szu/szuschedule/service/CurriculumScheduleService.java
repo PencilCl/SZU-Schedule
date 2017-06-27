@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import cn.edu.szu.szuschedule.object.Course;
+import cn.edu.szu.szuschedule.object.TodoItem;
 import cn.edu.szu.szuschedule.object.User;
 import cn.edu.szu.szuschedule.util.CommonUtil;
 import com.lzy.okgo.OkGo;
@@ -19,6 +20,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -85,6 +87,23 @@ public class CurriculumScheduleService {
         ContentValues cv = new ContentValues();
         cv.put("location", course.getVenue());
         db.update("lesson", cv, "id=?", new String[]{String.valueOf(course.getId())});
+    }
+
+    /**
+     * 获取某天的课程列表
+     * @param date
+     * @return
+     */
+    public static List<TodoItem> getTodoList(Date date) {
+        String timeFormat = "第%d节课";
+        List<TodoItem> todoItems = new ArrayList<>();
+        int day = date.getDay();
+        for (Course course : courses) {
+            if (course.getDay() == day) {
+                todoItems.add(new TodoItem(course.getCourseName(), course.getVenue(), String.format(timeFormat, course.getBegin()), String.format(timeFormat, course.getEnd())));
+            }
+        }
+        return todoItems;
     }
 
     /**
