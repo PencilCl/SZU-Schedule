@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.ImageButton;
 
 import android.widget.Toast;
+import cn.edu.szu.szuschedule.object.User;
 import cn.edu.szu.szuschedule.service.LibraryService;
 
 import java.util.ArrayList;
@@ -16,9 +17,12 @@ import java.util.List;
 
 import cn.edu.szu.szuschedule.adapter.BooksAdapter;
 import cn.edu.szu.szuschedule.object.BookItem;
+import cn.edu.szu.szuschedule.service.UserService;
 import cn.edu.szu.szuschedule.util.LoadingUtil;
+import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
@@ -60,7 +64,14 @@ public class LibrarybooksActivity extends AppCompatActivity {
 
     private void getBook() {
         loadingUtil.showLoading();
-        LibraryService.getBorrowedBooks(this)
+        User user = UserService.getCurrentUser();
+        LibraryService.loginLibrary(user.getAccount(), user.getPassword())
+                .flatMap(new Function<String, ObservableSource<ArrayList<BookItem>>>() {
+                    @Override
+                    public ObservableSource<ArrayList<BookItem>> apply(String s) throws Exception {
+                        return LibraryService.getBorrowedBooks(LibrarybooksActivity.this);
+                    }
+                })
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<ArrayList<BookItem>>() {
                     @Override
@@ -77,5 +88,6 @@ public class LibrarybooksActivity extends AppCompatActivity {
                         Toast.makeText(LibrarybooksActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
+
     }
 }
