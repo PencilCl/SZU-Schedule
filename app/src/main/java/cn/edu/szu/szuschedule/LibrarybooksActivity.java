@@ -102,14 +102,7 @@ public class LibrarybooksActivity extends AppCompatActivity {
     }
     private void getBook() {
         loadingUtil.showLoading();
-        User user = UserService.getCurrentUser();
-        LibraryService.loginLibrary(user.getAccount(), user.getPassword())
-                .flatMap(new Function<String, ObservableSource<ArrayList<BookItem>>>() {
-                    @Override
-                    public ObservableSource<ArrayList<BookItem>> apply(String s) throws Exception {
-                        return LibraryService.getBorrowedBooks(LibrarybooksActivity.this);
-                    }
-                })
+        LibraryService.getBorrowedBooks(LibrarybooksActivity.this)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<ArrayList<BookItem>>() {
                     @Override
@@ -128,7 +121,6 @@ public class LibrarybooksActivity extends AppCompatActivity {
                         Toast.makeText(LibrarybooksActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
-
     }
     //更新图书信息
     private void getRefresh() {

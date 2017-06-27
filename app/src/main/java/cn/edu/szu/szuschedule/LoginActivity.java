@@ -113,7 +113,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                             startActivity(new Intent(LoginActivity.this, MainActivity.class));
                             finish();
                         } else {
-                            Toast.makeText(LoginActivity.this, "保存用户信息失败，尝试从重新登录", Toast.LENGTH_SHORT).show();;
+                            Toast.makeText(LoginActivity.this, "保存用户信息失败，尝试从重新登录", Toast.LENGTH_SHORT).show();
                         }
                     }
                 }, new Consumer<Throwable>() {

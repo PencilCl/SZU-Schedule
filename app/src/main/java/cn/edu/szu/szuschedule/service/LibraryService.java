@@ -10,9 +10,15 @@ import cn.edu.szu.szuschedule.object.BookItem;
 import cn.edu.szu.szuschedule.object.User;
 import cn.edu.szu.szuschedule.util.SZUAuthenticationWebViewClient;
 import com.lzy.okgo.OkGo;
+import com.lzy.okgo.convert.StringConvert;
+import com.lzy.okrx2.adapter.ObservableBody;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.ObservableSource;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 import java.util.ArrayList;
@@ -51,24 +57,6 @@ public class LibraryService {
     }
 
     /**
-     * 登录图书馆
-     * 使用图书馆相关功能前应当调用此方法，确保完成了图书馆的登录
-     * @param username 校园卡号
-     * @param password 统一身份认证密码
-     * @return 登录失败抛出异常，登录成功返回空字符串
-     */
-    public static Observable<String> loginLibrary(final String username, final String password) {
-        return Observable.create(new ObservableOnSubscribe<String>() {
-            @Override
-            public void subscribe(final ObservableEmitter<String> e) throws Exception {
-                LibraryService libraryServiceService = getInstance();
-                libraryServiceService.webView.setWebViewClient(new SZUAuthenticationWebViewClient(username, password, e, loginPageUrl, booksUrl));
-                libraryServiceService.webView.loadUrl(booksUrl);
-            }
-        });
-    }
-
-    /**
      * 获取当前用户借阅图书列表
      * @return 失败抛出异常，成功返回图书列表
      */
@@ -87,12 +75,7 @@ public class LibraryService {
                 getLocalDatabaseData(context);// 从本地数据库中获取
                 // 如果本地数据为空，则从网络中获取
                 if (bookItems.size() == 0) {
-                    String error = getDataFromNetwork(context);
-                    if (error == null) {
-                        e.onNext(bookItems);
-                    } else {
-                        e.onError(new Throwable(error));
-                    }
+                    getDataFromNetwork(context, e);
                 } else {
                     e.onNext(bookItems);
                 }
@@ -112,7 +95,7 @@ public class LibraryService {
                     bookItems = new ArrayList<>();
                 }
 
-                getDataFromNetwork(context);// 从网络中获取中获取
+                getDataFromNetwork(context, e);// 从网络中获取
                // System.out.println("更新图书信息");
             }
         }).subscribeOn(Schedulers.io());
@@ -123,47 +106,61 @@ public class LibraryService {
      * 并保存到数据库中
      * @return 成功返回null 失败返回错误信息;
      */
-    private static String getDataFromNetwork(Context context) {
-        CookieManager cookieManager = CookieManager.getInstance();
-        if(cookieManager.getCookie(booksUrl) == null) {
-            return "登录信息失效";
-        }
-        try {
-
-
-            okhttp3.Response response = OkGo.get(booksUrl)
-                    .headers("Cookie", cookieManager.getCookie(booksUrl))
-                    .execute();
-            String html = response.body().string();
-            Pattern pattern = Pattern.compile(reg, Pattern.CASE_INSENSITIVE);
-            Matcher matcher = pattern.matcher(html);
-            SQLiteDatabase db = DBHelper.getDB(context);
-            //清空原来的内容
-            bookItems.clear();
-            db.execSQL("delete from library");
-            while(matcher.find()) {
-                BookItem book = new BookItem(-1, UserService.getCurrentUser(), matcher.group(2), matcher.group(3), matcher.group(1));
-                ContentValues cv = new ContentValues();
-                cv.put("studentID", book.getUser().getId());
-                cv.put("bookName", book.getBook_Name());
-                cv.put("startDate", book.getBorrow_Time());
-                cv.put("endDate", book.getReturn_DeadLine());
-                db.insert("library", null, cv);
-                // 获取最后插入的记录id
-                Cursor cursor = db.rawQuery("select last_insert_rowid() from library", null);
-                int lastId = 0;
-                if (cursor.moveToFirst()) lastId = cursor.getInt(0);
-                cursor.close();
-                book.setId(lastId);
-                System.out.println("外网    "+book.getBook_Name()+"    "+book.getUserName()+"     "+book.getBorrow_Time()+"'''''''''''''''''''''");
-                bookItems.add(book);
-            }
-            db.close();
-            return null;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "发生未知错误";
+    private static void getDataFromNetwork(final Context context, final ObservableEmitter<ArrayList<BookItem>> e) {
+        final User user = UserService.getCurrentUser();
+        loginLibrary(user.getAccount(), user.getPassword())
+                .observeOn(Schedulers.io())
+                .flatMap(new Function<String, ObservableSource<String>>() {
+                    @Override
+                    public ObservableSource<String> apply(String s) throws Exception {
+                        CookieManager cookieManager = CookieManager.getInstance();
+                        return OkGo.<String>get(booksUrl)
+                                .headers("Cookie", cookieManager.getCookie(booksUrl))
+                                .converter(new StringConvert())
+                                .adapt(new ObservableBody<String>());
+                    }
+                })
+                .subscribe(new Consumer<String>() {
+                    @Override
+                    public void accept(String html) throws Exception {
+                        try {
+                            Pattern pattern = Pattern.compile(reg, Pattern.CASE_INSENSITIVE);
+                            Matcher matcher = pattern.matcher(html);
+                            SQLiteDatabase db = DBHelper.getDB(context);
+                            //清空原来的内容
+                            bookItems.clear();
+                            db.delete("library", "studentID = ?", new String[]{String.valueOf(user.getId())});
+                            while(matcher.find()) {
+                                BookItem book = new BookItem(-1, UserService.getCurrentUser(), matcher.group(2), matcher.group(3), matcher.group(1));
+                                ContentValues cv = new ContentValues();
+                                cv.put("studentID", book.getUser().getId());
+                                cv.put("bookName", book.getBook_Name());
+                                cv.put("startDate", book.getBorrow_Time());
+                                cv.put("endDate", book.getReturn_DeadLine());
+                                db.insert("library", null, cv);
+                                // 获取最后插入的记录id
+                                Cursor cursor = db.rawQuery("select last_insert_rowid() from library", null);
+                                int lastId = 0;
+                                if (cursor.moveToFirst()) lastId = cursor.getInt(0);
+                                cursor.close();
+                                book.setId(lastId);
+                                System.out.println("外网    "+book.getBook_Name()+"    "+book.getUserName()+"     "+book.getBorrow_Time()+"'''''''''''''''''''''");
+                                bookItems.add(book);
+                            }
+                            db.close();
+                            e.onNext(bookItems);
+                            return ;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        e.onError(new Throwable("发生未知错误"));
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        e.onError(throwable);
+                    }
+                });
     }
 
     /**
@@ -192,5 +189,22 @@ public class LibraryService {
         }
         cursor.close();
         db.close();
+    }
+
+    /**
+     * 登录图书馆
+     * @param username 校园卡号
+     * @param password 统一身份认证密码
+     * @return 登录失败抛出异常，登录成功返回空字符串
+     */
+    private static Observable<String> loginLibrary(final String username, final String password) {
+        return Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(final ObservableEmitter<String> e) throws Exception {
+                LibraryService libraryServiceService = getInstance();
+                libraryServiceService.webView.setWebViewClient(new SZUAuthenticationWebViewClient(username, password, e, loginPageUrl, booksUrl));
+                libraryServiceService.webView.loadUrl(booksUrl);
+            }
+        }).subscribeOn(AndroidSchedulers.mainThread());
     }
 }
