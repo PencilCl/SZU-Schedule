@@ -77,6 +77,18 @@ public class CurriculumSchedule extends GridLayout implements View.OnClickListen
         addView(textView);
     }
 
+    /**
+     * 更新course信息
+     * @param course
+     */
+    public void updateCourse(Course course) {
+        for (TextView textView : textViewCourseHashMap.keySet()) {
+            if (textViewCourseHashMap.get(textView) == course) {
+                textView.setText(course.getCourseName() + "\n" + course.getVenue());
+            }
+        }
+    }
+
     @Override
     public void onClick(View v) {
         if (this.onClickListener != null) {

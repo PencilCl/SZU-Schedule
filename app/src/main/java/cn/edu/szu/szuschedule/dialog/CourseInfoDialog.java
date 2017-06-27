@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.object.Course;
+import cn.edu.szu.szuschedule.service.CurriculumScheduleService;
 
 /**
  * Created by chenlin on 07/06/2017.
@@ -20,8 +21,20 @@ public class CourseInfoDialog implements View.OnClickListener {
     private EditText venue;
     private Button cancel;
     private Button save;
+    private Course course;
+    private OnSaveListener onSaveListener;
+
+    public void setOnSaveListener(OnSaveListener onSaveListener) {
+        this.onSaveListener = onSaveListener;
+    }
+
+    public interface OnSaveListener {
+        void onSave(Course course, String venue);
+    }
 
     public CourseInfoDialog(Context context, Course course) {
+        this.course = course;
+
         View mView = LayoutInflater.from(context).inflate(R.layout.dialog_course_info, null);
 
         TextView courseName = (TextView) mView.findViewById(R.id.courseName);
@@ -47,17 +60,14 @@ public class CourseInfoDialog implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.save:
+                if (this.onSaveListener != null) {
+                    this.onSaveListener.onSave(course, venue.getText().toString());
+                }
             case R.id.cancel:
                 mDialog.cancel();
                 break;
-            case R.id.save:
-                save();
-                break;
             default:
         }
-    }
-
-    private void save() {
-        mDialog.cancel();
     }
 }

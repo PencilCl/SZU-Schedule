@@ -5,18 +5,24 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.Toast;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.edu.szu.szuschedule.dialog.CourseInfoDialog;
 import cn.edu.szu.szuschedule.object.Course;
+import cn.edu.szu.szuschedule.service.CurriculumScheduleService;
 import cn.edu.szu.szuschedule.view.CurriculumSchedule;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+
+import java.util.List;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
 /**
  * Created by chenlin on 01/06/2017.
  */
-public class CurriculumScheduleActivity extends AppCompatActivity implements CurriculumSchedule.OnClickListener {
+public class CurriculumScheduleActivity extends AppCompatActivity implements CurriculumSchedule.OnClickListener, CourseInfoDialog.OnSaveListener {
     @Bind(R.id.curriculumGrid)
     CurriculumSchedule curriculumSchedule;
 
@@ -36,30 +42,39 @@ public class CurriculumScheduleActivity extends AppCompatActivity implements Cur
         });
 
         curriculumSchedule.setOnClickListener(this);
-        curriculumSchedule.setCurrentDay(4);
 
-        curriculumSchedule.addCourse(new Course("计算机系统(2)", "教学楼B506", 1, 1, 2));
-        curriculumSchedule.addCourse(new Course("离散数学", "教学楼B311", 1, 3, 4));
-        curriculumSchedule.addCourse(new Course("互联网编程", "教学楼C407", 1, 5, 6));
-        curriculumSchedule.addCourse(new Course("互联网编程", "实验室D324", 1, 7, 8));
-
-        curriculumSchedule.addCourse(new Course("操作系统", "教学楼C410", 2, 1, 2));
-        curriculumSchedule.addCourse(new Course("操作系统", "实验室D241", 2, 3, 4));
-        curriculumSchedule.addCourse(new Course("计算机论题", "教学楼C413", 2, 5, 6));
-        curriculumSchedule.addCourse(new Course("软件工程", "实验室D326", 2, 7, 8));
-        curriculumSchedule.addCourse(new Course("马克思主义基本原理", "文科楼H-06", 2, 9, 10));
-        curriculumSchedule.addCourse(new Course("毛泽东思想和中国特色社会主义理论体系概论(2)", "师院A204", 2, 11, 12));
-
-        curriculumSchedule.addCourse(new Course("离散数学", "教学楼B311", 3, 1, 2));
-        curriculumSchedule.addCourse(new Course("计算机网络", "教学楼C414", 3, 5, 6));
-        curriculumSchedule.addCourse(new Course("计算机网络", "实验室D325", 3, 7, 8));
-
-        curriculumSchedule.addCourse(new Course("软件工程", "教学楼A207", 4, 3, 4));
-        curriculumSchedule.addCourse(new Course("计算机系统(2)", "教学楼B506", 4, 7, 8));
+        getCourseInfo();
     }
+
+    private void getCourseInfo() {
+        CurriculumScheduleService.getCourses(this)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<List<Course>>() {
+                    @Override
+                    public void accept(List<Course> courses) throws Exception {
+                        for (int i = 0; i < courses.size(); ++i) {
+                            curriculumSchedule.addCourse(courses.get(i));
+                        }
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        throwable.printStackTrace();
+                        Toast.makeText(CurriculumScheduleActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
 
     @Override
     public void onClick(View v, Course course) {
-        new CourseInfoDialog(this, course);
+        new CourseInfoDialog(this, course).setOnSaveListener(this);
+    }
+
+    @Override
+    public void onSave(Course course, String venue) {
+        course.setVenue(venue);
+        CurriculumScheduleService.updateVenue(this, course);
+        curriculumSchedule.updateCourse(course);
     }
 }
