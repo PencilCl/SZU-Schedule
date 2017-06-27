@@ -83,19 +83,25 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         return BBService.getStuNum();
                     }
                 })
-                .flatMap(new Function<String, ObservableSource<Boolean>>() {
+                .flatMap(new Function<String, ObservableSource<User>>() {
                     @Override
-                    public ObservableSource<Boolean> apply(String stuNum) throws Exception {
-                        if ("".equals(stuNum)) {
+                    public ObservableSource<User> apply(String stuNum) throws Exception {
+                        return UserService.getUserInfo(new User(-1, account, passwordStr, stuNum));
+                    }
+                })
+                .flatMap(new Function<User, ObservableSource<Boolean>>() {
+                    @Override
+                    public ObservableSource<Boolean> apply(User user) throws Exception {
+                        if (user == null) {
                             return Observable.create(new ObservableOnSubscribe<Boolean>() {
                                 @Override
                                 public void subscribe(ObservableEmitter<Boolean> e) throws Exception {
-                                    e.onNext(false);
+                                    e.onError(new Throwable("获取信息失败"));
                                 }
                             });
                         }
                         // 保存当前用户信息
-                        return UserService.saveUserInfo(LoginActivity.this, new User(-1, account, passwordStr, stuNum));
+                        return UserService.saveUserInfo(LoginActivity.this, user);
                     }
                 })
                 .observeOn(AndroidSchedulers.mainThread())
@@ -107,7 +113,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                             startActivity(new Intent(LoginActivity.this, MainActivity.class));
                             finish();
                         } else {
-                            Toast.makeText(LoginActivity.this, "保存用户信息失败，尝试从重新登录", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, "保存用户信息失败，尝试从重新登录", Toast.LENGTH_SHORT).show();;
                         }
                     }
                 }, new Consumer<Throwable>() {

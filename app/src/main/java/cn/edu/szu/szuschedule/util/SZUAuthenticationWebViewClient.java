@@ -33,7 +33,6 @@ public class SZUAuthenticationWebViewClient extends WebViewClient {
     @Override
     public void onPageFinished(final WebView view, String url) {
         super.onPageFinished(view, url);
-        System.out.println(url);
         if (Pattern.compile(loginPageUrl).matcher(url).find()) {
             view.evaluateJavascript("document.getElementById(\"errorMsg\").innerText;", new ValueCallback<String>() {
                 @Override
