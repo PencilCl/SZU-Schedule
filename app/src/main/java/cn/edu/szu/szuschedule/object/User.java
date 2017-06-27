@@ -15,6 +15,7 @@ public class User {
     }
 
     public User(int id, String account, String password, String sex, String stuNum,String name) {
+        this.id = id;
         this.account = account;
         this.password = password;
         this.sex = sex;
