@@ -78,6 +78,10 @@ public class LibraryService {
             public void subscribe(ObservableEmitter<ArrayList<BookItem>> e) throws Exception {
                 if (bookItems == null) {
                     bookItems = new ArrayList<>();
+                } else {
+                    // 如果bookItems已存在，则直接返回
+                    e.onNext(bookItems);
+                    return ;
                 }
 
                 getLocalDatabaseData(context);// 从本地数据库中获取
