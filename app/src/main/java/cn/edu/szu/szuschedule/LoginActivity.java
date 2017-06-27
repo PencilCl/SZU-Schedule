@@ -77,6 +77,12 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         // 登录操作
         loadingUtil.showLoading();
         BBService.loginBB(account, passwordStr)
+                .flatMap(new Function<String, ObservableSource<String>>() {
+                    @Override
+                    public ObservableSource<String> apply(String s) throws Exception {
+                        return BBService.getStuNum();
+                    }
+                })
                 .flatMap(new Function<String, ObservableSource<Boolean>>() {
                     @Override
                     public ObservableSource<Boolean> apply(String stuNum) throws Exception {
@@ -101,7 +107,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                             startActivity(new Intent(LoginActivity.this, MainActivity.class));
                             finish();
                         } else {
-                            System.out.println("保存用户信息失败，尝试从重新登录");
+                            Toast.makeText(LoginActivity.this, "保存用户信息失败，尝试从重新登录", Toast.LENGTH_SHORT).show();
                         }
                     }
                 }, new Consumer<Throwable>() {

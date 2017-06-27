@@ -2,6 +2,7 @@ package cn.edu.szu.szuschedule;
 
 import android.app.Application;
 import cn.edu.szu.szuschedule.service.BBService;
+import cn.edu.szu.szuschedule.service.LibraryService;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.cookie.CookieJarImpl;
 import com.lzy.okgo.cookie.store.MemoryCookieStore;
@@ -19,7 +20,9 @@ public class MyApplication extends Application {
 
         initOkGo();
         BBService.getInstance()
-                    .init(this);
+                .init(this);
+        LibraryService.getInstance()
+                .init(this);
     }
 
     private void initOkGo() {
