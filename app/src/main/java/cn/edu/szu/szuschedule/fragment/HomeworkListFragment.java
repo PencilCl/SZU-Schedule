@@ -19,7 +19,7 @@ import java.util.ArrayList;
 /**
  * Created by chenlin on 07/06/2017.
  */
-public class HomeworkListFragment extends Fragment implements Homework.OnClickListener {
+public class HomeworkListFragment extends Fragment {
     View view;
     RecyclerView homeworkList;
 
@@ -39,10 +39,4 @@ public class HomeworkListFragment extends Fragment implements Homework.OnClickLi
 
         return view;
     }
-
-    @Override
-    public void onClick(View view, Homework homeworkItem) {
-        startActivity(new Intent(getContext(), BlackBoardHomeworkInfoActivity.class));
-    }
-
 }

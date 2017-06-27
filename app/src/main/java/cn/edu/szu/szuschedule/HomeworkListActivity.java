@@ -1,6 +1,5 @@
 package cn.edu.szu.szuschedule;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -19,7 +18,7 @@ import java.util.ArrayList;
 /**
  * Created by chenlin on 07/06/2017.
  */
-public class HomeworkListActivity extends AppCompatActivity implements Homework.OnClickListener {
+public class HomeworkListActivity extends AppCompatActivity {
     @Bind(R.id.homeworkList)
     RecyclerView homeworkList;
 
@@ -42,14 +41,9 @@ public class HomeworkListActivity extends AppCompatActivity implements Homework.
         homeworkList.setLayoutManager(sub_list_layoutManager);
 
         ArrayList<Homework> homeworkItems = new ArrayList<>();
-        homeworkItems.add(new Homework("软件工程", "实验1 软件界面设计", "2017年3月27日 下午11时30分00秒", 100, this,"作业很难啊"));
-        homeworkItems.add(new Homework("软件工程", "实验2 数据库建模", "2017年4月4日 下午10时00分00秒",100, this,"作业很难啊"));
+//        homeworkItems.add(new Homework("软件工程", "实验1 软件界面设计", "2017年3月27日 下午11时30分00秒", 100, this,"作业很难啊"));
+//        homeworkItems.add(new Homework("软件工程", "实验2 数据库建模", "2017年4月4日 下午10时00分00秒",100, this,"作业很难啊"));
 
         homeworkList.setAdapter(new HomeworkAdapter(homeworkItems));
-    }
-
-    @Override
-    public void onClick(View view, Homework homeworkItem) {
-        startActivity(new Intent(this, BlackBoardHomeworkInfoActivity.class));
     }
 }

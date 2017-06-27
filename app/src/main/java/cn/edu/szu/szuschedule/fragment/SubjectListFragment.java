@@ -19,7 +19,7 @@ import java.util.ArrayList;
 /**
  * Created by chenlin on 07/06/2017.
  */
-public class SubjectListFragment extends Fragment implements SubjectItem.OnClickListener {
+public class SubjectListFragment extends Fragment {
     View view;
     RecyclerView subjectList;
 
@@ -32,17 +32,12 @@ public class SubjectListFragment extends Fragment implements SubjectItem.OnClick
         subjectList.setLayoutManager(sub_list_layoutManager);
 
         ArrayList<SubjectItem> subjectItems = new ArrayList<>();
-        subjectItems.add(new SubjectItem("软件工程", "有新动态", this));
-        subjectItems.add(new SubjectItem("计算机系统", "有新动态", this));
+//        subjectItems.add(new SubjectItem("软件工程", "有新动态", this));
+//        subjectItems.add(new SubjectItem("计算机系统", "有新动态", this));
 
         SubjectAdapter subadpter = new SubjectAdapter(subjectItems);
         subjectList.setAdapter(subadpter);
 
         return view;
-    }
-
-    @Override
-    public void onClick(View view, SubjectItem subjectItem) {
-        startActivity(new Intent(getContext(), HomeworkListActivity.class));
     }
 }

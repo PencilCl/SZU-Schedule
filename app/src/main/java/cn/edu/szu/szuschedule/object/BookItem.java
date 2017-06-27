@@ -2,41 +2,46 @@ package cn.edu.szu.szuschedule.object;
 
 public class BookItem {
     private int id;
-    private User user;
-    private String borrow_Time;
-    private String book_Name;
-    private String return_DeadLine;
+    private String startDate;
+    private String bookName;
+    private String endDate;
 
-    public BookItem(int id, User user, String book_Name, String borrow_Time, String return_DeadLine) {
+    public BookItem(int id, String bookName, String startDate, String endDate) {
         this.id = id;
-        this.user = user;
-        this.borrow_Time = borrow_Time;
-        this.book_Name = book_Name;
-        this.return_DeadLine = return_DeadLine;
+        this.bookName = bookName;
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 
     public void setId(int id) {
         this.id = id;
     }
 
+    public void setStartDate(String startDate) {
+        this.startDate = startDate;
+    }
+
+    public void setBookName(String bookName) {
+        this.bookName = bookName;
+    }
+
+    public void setEndDate(String endDate) {
+        this.endDate = endDate;
+    }
+
     public int getId() {
         return id;
     }
 
-    public User getUser()   {   return user;    }
-
-    public String getUserName() {   return user.getName();  }
-
-    public String getBook_Name() {
-        return book_Name;
+    public String getStartDate() {
+        return startDate;
     }
 
-    public String getBorrow_Time() {
-        return borrow_Time;
+    public String getBookName() {
+        return bookName;
     }
 
-    public String getReturn_DeadLine() {
-        return return_DeadLine;
+    public String getEndDate() {
+        return endDate;
     }
-
 }

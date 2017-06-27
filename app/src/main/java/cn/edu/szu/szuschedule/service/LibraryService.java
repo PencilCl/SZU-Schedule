@@ -131,12 +131,12 @@ public class LibraryService {
                             bookItems.clear();
                             db.delete("library", "studentID = ?", new String[]{String.valueOf(user.getId())});
                             while(matcher.find()) {
-                                BookItem book = new BookItem(-1, UserService.getCurrentUser(), matcher.group(2), matcher.group(3), matcher.group(1));
+                                BookItem book = new BookItem(-1, matcher.group(2), matcher.group(3), matcher.group(1));
                                 ContentValues cv = new ContentValues();
-                                cv.put("studentID", book.getUser().getId());
-                                cv.put("bookName", book.getBook_Name());
-                                cv.put("startDate", book.getBorrow_Time());
-                                cv.put("endDate", book.getReturn_DeadLine());
+                                cv.put("studentID", user.getId());
+                                cv.put("bookName", book.getBookName());
+                                cv.put("startDate", book.getStartDate());
+                                cv.put("endDate", book.getEndDate());
                                 db.insert("library", null, cv);
                                 // 获取最后插入的记录id
                                 Cursor cursor = db.rawQuery("select last_insert_rowid() from library", null);
@@ -144,7 +144,7 @@ public class LibraryService {
                                 if (cursor.moveToFirst()) lastId = cursor.getInt(0);
                                 cursor.close();
                                 book.setId(lastId);
-                                System.out.println("外网    "+book.getBook_Name()+"    "+book.getUserName()+"     "+book.getBorrow_Time()+"'''''''''''''''''''''");
+                                System.out.println("外网    "+book.getBookName()+"     "+book.getEndDate()+"'''''''''''''''''''''");
                                 bookItems.add(book);
                             }
                             db.close();
@@ -178,12 +178,11 @@ public class LibraryService {
         while (cursor.moveToNext()) {
             BookItem bookmark = new BookItem(
                     cursor.getInt(idIndex),
-                    user,
                     cursor.getString(bookNameIndex),
                     cursor.getString(startDateIndex),
                     cursor.getString(endDateIndex)
             );
-            System.out.println("本地    "+bookmark.getBook_Name()+"    "+bookmark.getUserName()+"     "+bookmark.getBorrow_Time()+"'''''''''''''''''''''");
+            System.out.println("本地    "+bookmark.getBookName()+"     "+bookmark.getEndDate()+"'''''''''''''''''''''");
 
             bookItems.add(bookmark);
         }

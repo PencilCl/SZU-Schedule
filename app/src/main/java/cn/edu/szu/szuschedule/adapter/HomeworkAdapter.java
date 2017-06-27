@@ -13,8 +13,18 @@ import java.util.ArrayList;
 /**
  * Created by chenlin on 07/06/2017.
  */
-public class HomeworkAdapter extends RecyclerView.Adapter {
+public class HomeworkAdapter extends RecyclerView.Adapter implements View.OnClickListener {
     private ArrayList<Homework> homeworkItems;
+    private RecyclerView mRecyclerView;
+    private OnClickListener onClickListener;
+
+    public interface OnClickListener {
+        void onClick(int position, View view, Homework homework);
+    }
+
+    public void setOnClickListener(OnClickListener onClickListener) {
+        this.onClickListener = onClickListener;
+    }
 
     public HomeworkAdapter(ArrayList<Homework> moduleItems) {
         this.homeworkItems = moduleItems;
@@ -28,6 +38,7 @@ public class HomeworkAdapter extends RecyclerView.Adapter {
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_homework, null);
+        view.setOnClickListener(this);
         return new MyViewHolder(view);
     }
 
@@ -36,10 +47,24 @@ public class HomeworkAdapter extends RecyclerView.Adapter {
         MyViewHolder myViewHolder = (HomeworkAdapter.MyViewHolder) holder;
         Homework homeworkItem = homeworkItems.get(position);
 
-        myViewHolder.courseName.setText(homeworkItem.getCourseName());
+        myViewHolder.courseName.setText(homeworkItem.getName());
         myViewHolder.name.setText(homeworkItem.getName());
         myViewHolder.otherInfo.setText(homeworkItem.getScore() == null ? "截止日期: " + homeworkItem.getDeadline() : "得分: " + homeworkItem.getScore());
         myViewHolder.homeworkItem = homeworkItem;
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        this.mRecyclerView = recyclerView;
+        super.onAttachedToRecyclerView(recyclerView);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (this.onClickListener != null) {
+            int position = mRecyclerView.getChildAdapterPosition(v);
+            this.onClickListener.onClick(position, v, homeworkItems.get(position));
+        }
     }
 
     class MyViewHolder extends RecyclerView.ViewHolder {
@@ -55,17 +80,6 @@ public class HomeworkAdapter extends RecyclerView.Adapter {
             courseName = (TextView) itemView.findViewById(R.id.courseName);
             name = (TextView) itemView.findViewById(R.id.name);
             otherInfo = (TextView) itemView.findViewById(R.id.info);
-
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (homeworkItem.getOnClickListener() != null) {
-                        homeworkItem.getOnClickListener().onClick(view, homeworkItem);
-                    }
-                }
-            });
         }
-
-
     }
 }

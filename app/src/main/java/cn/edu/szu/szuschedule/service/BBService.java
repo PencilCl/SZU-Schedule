@@ -8,12 +8,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 
+import cn.edu.szu.szuschedule.object.SubjectItem;
 import cn.edu.szu.szuschedule.util.CommonUtil;
 import cn.edu.szu.szuschedule.util.SZUAuthenticationWebViewClient;
 import com.lzy.okgo.OkGo;
 
-import java.io.OutputStream;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,11 +22,8 @@ import com.lzy.okrx2.adapter.ObservableBody;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
-import cn.edu.szu.szuschedule.object.BBCourseItem;
-import java.util.ArrayList;
 
 /**
  * Created by chenlin on 14/06/2017.
@@ -45,7 +41,7 @@ public class BBService {
     private static Pattern stuNumPattern;
 
     private WebView webView;
-    private static ArrayList<BBCourseItem> courseItem;
+    private static ArrayList<SubjectItem> subjectItems;
     private BBService() {
         stuNumPattern = Pattern.compile(stuNumReg);
     }
@@ -108,14 +104,14 @@ public class BBService {
                 })
                 .subscribeOn(Schedulers.io());
     }
-    public static Observable<ArrayList<BBCourseItem>> getAllCourses(final Context context) {
-        return Observable.create(new ObservableOnSubscribe<ArrayList<BBCourseItem>>() {
+    public static Observable<ArrayList<SubjectItem>> getAllCourses(final Context context) {
+        return Observable.create(new ObservableOnSubscribe<ArrayList<SubjectItem>>() {
             @Override
-            public void subscribe(ObservableEmitter<ArrayList<BBCourseItem>> e) throws Exception {
-                if(courseItem  == null){
-                    courseItem = new ArrayList<>();
+            public void subscribe(ObservableEmitter<ArrayList<SubjectItem>> e) throws Exception {
+                if(subjectItems  == null){
+                    subjectItems = new ArrayList<>();
                 } else{
-                    e.onNext(courseItem);
+                    e.onNext(subjectItems);
                     return;
                 }
 //                getLocalDatabaseData(context);
@@ -142,17 +138,18 @@ public class BBService {
         int subjectNameIndex = cursor.getColumnIndex("subjectName");
         int courseNumIndex = cursor.getColumnIndex("courseNum");
         int termNumIndex = cursor.getColumnIndex("termNum");
+        int courseIDIndex = cursor.getColumnIndex("courseID");
         while(cursor.moveToNext()){
-            BBCourseItem bbCourseItem = new BBCourseItem(
+            SubjectItem subjectItem = new SubjectItem(
                     cursor.getInt(idIndex),
                     cursor.getString(subjectNameIndex),
+                    cursor.getString(courseIDIndex),
                     cursor.getString(courseNumIndex),
-                    cursor.getString(termNumIndex),
-                    null,null
+                    cursor.getString(termNumIndex)
                     );
-            System.out.println("本地获取      "+ bbCourseItem.getCourseNum());
+            System.out.println("本地获取      "+ subjectItem.getCourseNum());
 
-            courseItem.add(bbCourseItem);
+            subjectItems.add(subjectItem);
         }
         cursor.close();
         db.close();
@@ -183,7 +180,7 @@ public class BBService {
                 String courseName = info.substring(info.indexOf(":") + 2);
                 String termNum = info.substring(0, 5);
                 String courseNum = info.substring(6, info.indexOf(":"));
-                BBCourseItem course = new BBCourseItem(-1,courseName,courseNum,termNum,null,null);
+//                SubjectItem course = new SubjectItem(-1,courseName,courseNum,termNum);
                 ContentValues cv = new ContentValues();
                 cv.put("subjectName",courseName);
                 cv.put("courseNum",courseNum);
@@ -194,8 +191,8 @@ public class BBService {
                 int lastId = 0;
                 if(cursor.moveToFirst()) lastId = cursor.getInt(0);
                 cursor.close();
-                course.setId(lastId);
-                courseItem.add(course);
+//                course.setId(lastId);
+//                courseItem.add(course);
                 System.out.println(String.format("学期号: %s\n课程名: %s\n课程号: %s\n链接: %s", termNum, courseName, courseNum, link));
                 System.out.println("------------------------------");
                 String ss = "/webapps/portal/frameset.jsp?tab_tabgroup_id=_2_1&url=%2Fwebapps%2Fblackboard%2Fexecute%2Flauncher%3Ftype%3DCourse%26id%3D_29748_1%26url%3D";

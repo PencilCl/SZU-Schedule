@@ -11,20 +11,16 @@ import java.util.ArrayList;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import cn.edu.szu.szuschedule.adapter.BooksAdapter;
 import cn.edu.szu.szuschedule.adapter.ViewPagerAdapter;
 import cn.edu.szu.szuschedule.fragment.SubjectListFragment;
 import cn.edu.szu.szuschedule.fragment.HomeworkListFragment;
-import cn.edu.szu.szuschedule.object.BBCourseItem;
-import cn.edu.szu.szuschedule.object.BookItem;
+import cn.edu.szu.szuschedule.object.SubjectItem;
 import cn.edu.szu.szuschedule.object.User;
 import cn.edu.szu.szuschedule.service.BBService;
 import cn.edu.szu.szuschedule.service.UserService;
 import cn.edu.szu.szuschedule.util.LoadingUtil;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
@@ -38,7 +34,7 @@ public class BlackBoardActivity extends AppCompatActivity {
     @Bind(R.id.tabLayout)
     TabLayout tabLayout;
     LoadingUtil loadingUtil;
-    ArrayList<BBCourseItem> bbCourseItems;
+    ArrayList<SubjectItem> subjectItems;
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -73,9 +69,9 @@ public class BlackBoardActivity extends AppCompatActivity {
         loadingUtil.showLoading();
         User user = UserService.getCurrentUser();
         BBService.loginBB(user.getAccount(),user.getPassword())
-                .flatMap(new Function<String, ObservableSource<ArrayList<BBCourseItem>>>() {
+                .flatMap(new Function<String, ObservableSource<ArrayList<SubjectItem>>>() {
                     @Override
-                    public ObservableSource<ArrayList<BBCourseItem>> apply( String s) throws Exception {
+                    public ObservableSource<ArrayList<SubjectItem>> apply( String s) throws Exception {
                         return BBService.getAllCourses(BlackBoardActivity.this);
                     }
                 })

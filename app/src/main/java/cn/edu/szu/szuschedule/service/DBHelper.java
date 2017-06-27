@@ -41,19 +41,23 @@ public class DBHelper extends SQLiteOpenHelper {
         String subjectTable = "CREATE TABLE `subject` (" +
                 "`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "`subjectName` varchar(255) NOT NULL," +
-                "`courseNum` varchar(255) NOT NULL"  +
-                "`termNum` varchar(255) NOT NULL"  +
-                "`homeworkID` int(11) DEFAULT NULL," +
-                "FOREIGN KEY (`homeworkID`) REFERENCES `subjecthomework` (`id`))";
+                "`courseNum` varchar(255) NOT NULL," +
+                "`courseId` varchar(20) NOT NULL,"  +
+                "`termNum` varchar(255) NOT NULL)";
 
         String homeworkTable = "CREATE TABLE `homework` (" +
                 "`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "`homeworkName` varchar(255) NOT NULL," +
-                "`discription` varchar(255) NOT NULL," +
-                "`subjectID` int(11) DEFAULT NULL," +
+                "`description` varchar(255) NOT NULL," +
                 "`score` int(11) DEFAULT NULL," +
-                "`deadline` varchar(255) NOT NULL," +
-                "FOREIGN KEY (`subjectID`) REFERENCES `subject` (`id`))";
+                "`deadline` varchar(255) NOT NULL)";
+
+        String subjectHomeworkMapTable = "CREATE TABLE `subjectHomeworkMap` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "subjectID int(25) NOT NULL," +
+                "homeworkID int(25) NOT NULL," +
+                "FOREIGN KEY (`subjectID`) REFERENCES `subject` (`id`)," +
+                "FOREIGN KEY (`homeworkID`) REFERENCES `homework` (`id`))";
 
         String attachmentTable = "CREATE TABLE `attachment` (" +
                 "`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -67,7 +71,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "FOREIGN KEY (`studentID`) REFERENCES `student` (`id`)," +
                 "FOREIGN KEY (`subjectID`) REFERENCES `subject` (`id`))";
 
-        String subjecthomeworkTable = "CREATE TABLE `subjecthomework` (" +
+        String homeworkAttachmentMapTable = "CREATE TABLE `homeworkAttachmentMap` (" +
                 "`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "`homeworkID` int(11) NOT NULL," +
                 "`attachmentID` int(11) DEFAULT NULL," +
@@ -86,9 +90,10 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL(libraryTable);
         db.execSQL(subjectTable);
         db.execSQL(homeworkTable);
+        db.execSQL(subjectHomeworkMapTable);
         db.execSQL(attachmentTable);
         db.execSQL(blackboardTable);
-        db.execSQL(subjecthomeworkTable);
+        db.execSQL(homeworkAttachmentMapTable);
         db.execSQL(scheduleTable);
     }
 
