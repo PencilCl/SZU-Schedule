@@ -346,7 +346,6 @@ public class BBService {
         db.insert("blackboard", null, cv);
     }
 
-
     /**
      * 从网络上获取所有课程的作业列表
      * 并保存到数据库中
@@ -357,10 +356,9 @@ public class BBService {
         for (SubjectItem subjectItem : subjectItems) {
             try {
                 List<Homework> homeworkList = new ArrayList<>();
-                Response response = OkGo.<String>get(String.format("http://elearning.szu.edu.cn/webapps/blackboard/execute/modulepage/view?course_id=%s&mode=view", subjectItem.getCourseId()))
+                String html = OkGo.<String>get(String.format("http://elearning.szu.edu.cn/webapps/blackboard/execute/modulepage/view?course_id=%s&mode=view", subjectItem.getCourseId()))
                         .headers("Cookie", cookie)
-                        .execute();
-                String html = response.body().string();
+                        .execute().body().string();
                 Pattern pattern = Pattern.compile("<a href=\"(.*?)\" target=\"_self\"><span title=\"网上作业\">网上作业</span></a>");
                 Matcher matcher = pattern.matcher(html);
                 if (!matcher.find()) {
@@ -368,10 +366,9 @@ public class BBService {
                     continue;
                 }
                 String homeworkUrl = matcher.group(1);
-                response = OkGo.<String>get(homeworkUrl)
+                html = OkGo.<String>get(homeworkUrl)
                         .headers("Cookie", cookie)
-                        .execute();
-                html = response.body().string();
+                        .execute().body().string();
                 pattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?(<ul class=\"attachments clearfix\">([\\w\\W]*?)</ul>)?[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
                 matcher = pattern.matcher(html);
                 SQLiteDatabase db = DBHelper.getDB(mApplication);
@@ -404,47 +401,11 @@ public class BBService {
                         }
                     }
 
-                    response = OkGo.<String>get(baseUrl + singleHomeworkMatcher.group(1))
-                            .headers("Cookie", cookie)
-                            .execute();
-                    html = response.body().string();
-                    String deadline = null;
-                    int score = -1;
-                    Pattern deadlinePattern = Pattern.compile("id=\"dueDate\" value=\"(.*?)\"");
-                    Matcher deadlineMatcher = deadlinePattern.matcher(html);
-                    if (deadlineMatcher.find()) {
-                        deadline = deadlineMatcher.group(1);
-                        if ("&nbsp;".equals(deadline)) {
-                            deadline = "null";
-                        }
-                    }
-                    int finished = 0;
-                    int index1 = html.indexOf("/webapps/blackboard/execute/attemptExpandListItemGenerator?attempt_id=");
-                    if (index1 == -1) {
-                        index1 = html.indexOf("/webapps/blackboard/execute/groupAttemptExpandListItemGenerator?groupAttempt_id=");
-                    }
-                    if (index1 != -1) {
-                        finished = 1;
-                        String scoreUrl = html.substring(index1, html.indexOf("\"", index1));
-                        String scoreHtml = OkGo.<String>post(baseUrl + scoreUrl)
-                                .headers("Cookie", cookie)
-                                .params("course_id", subjectItem.getCourseId())
-                                .params("filterAttemptHref", "%2Fwebapps%2Fblackboard%2Fexecute%2FgradeAttempt")
-                                .execute().body().string();
-                        Pattern scorePattern = Pattern.compile("成绩 :.*?([0-9]+).*");
-                        Matcher scoreMatcher = scorePattern.matcher(scoreHtml);
-                        if (scoreMatcher.find()) {
-                            score = Integer.valueOf(scoreMatcher.group(1).trim());
-                        }
-                    }
-                    Homework homework = new Homework(
-                            -1,
+                    Homework homework = new Homework(-1,
                             singleHomeworkMatcher.group(2),
                             singleHomeworkMatcher.group(hasAttachment ? 4 : 3).replaceAll("</div>", "\n").replaceAll("<div>", "").trim(),
-                            score,
-                            deadline,
-                            finished,
-                            subjectItem);
+                            -1, "无", 0, subjectItem);
+                    getHomeworkOtherInfo(singleHomeworkMatcher.group(1), cookie, homework);
                     saveHomeworkToDatabase(db, homework, subjectItem, attachments);
                     homeworkListHashMap.put(homework, attachments);
                     mHomeworkList.add(homework);
@@ -455,6 +416,39 @@ public class BBService {
                 db.close();
             } catch (Exception e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private static void getHomeworkOtherInfo(String url, String cookie, Homework homework) throws IOException {
+        String html = OkGo.<String>get(baseUrl + url)
+                .headers("Cookie", cookie)
+                .execute().body().string();
+        String deadline = null;
+        Pattern deadlinePattern = Pattern.compile("id=\"dueDate\" value=\"(.*?)\"");
+        Matcher deadlineMatcher = deadlinePattern.matcher(html);
+        if (deadlineMatcher.find()) {
+            deadline = deadlineMatcher.group(1);
+            if (!"&nbsp;".equals(deadline)) {
+                homework.setDeadline(deadline);
+            }
+        }
+        int index = html.indexOf("/webapps/blackboard/execute/attemptExpandListItemGenerator?attempt_id=");
+        if (index == -1) {
+            index = html.indexOf("/webapps/blackboard/execute/groupAttemptExpandListItemGenerator?groupAttempt_id=");
+        }
+        if (index != -1) {
+            homework.setFinished(1); // 标记作业已完成
+            String scoreUrl = html.substring(index, html.indexOf("\"", index));
+            String scoreHtml = OkGo.<String>post(baseUrl + scoreUrl)
+                    .headers("Cookie", cookie)
+                    .params("course_id", homework.getSubjectItem().getCourseId())
+                    .params("filterAttemptHref", "%2Fwebapps%2Fblackboard%2Fexecute%2FgradeAttempt")
+                    .execute().body().string();
+            Pattern scorePattern = Pattern.compile("成绩 :.*?([0-9]+).*");
+            Matcher scoreMatcher = scorePattern.matcher(scoreHtml);
+            if (scoreMatcher.find()) {
+                homework.setScore(Integer.valueOf(scoreMatcher.group(1).trim()));
             }
         }
     }
