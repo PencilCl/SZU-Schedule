@@ -32,7 +32,6 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
         setTranslucentStatus(this);
 
         init();
-
     }
 
     @Override

@@ -19,8 +19,7 @@ public class MyApplication extends Application {
         super.onCreate();
 
         initOkGo();
-        BBService.getInstance()
-                .init(this);
+        BBService.init(this);
         LibraryService.getInstance()
                 .init(this);
     }

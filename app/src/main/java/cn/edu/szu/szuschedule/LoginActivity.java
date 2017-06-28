@@ -59,6 +59,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     sp.getString("stuNum", ""),
                     sp.getString("name", "")));
 
+            BBService.initData();
             startActivity(new Intent(LoginActivity.this, MainActivity.class));
             finish();
         }
@@ -110,6 +111,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     public void accept(Boolean success) throws Exception {
                         if (success) {
                             loadingUtil.hideLoading();
+                            BBService.initData();
                             startActivity(new Intent(LoginActivity.this, MainActivity.class));
                             finish();
                         } else {

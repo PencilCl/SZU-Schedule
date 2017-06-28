@@ -48,7 +48,7 @@ public class HomeworkAdapter extends RecyclerView.Adapter implements View.OnClic
         MyViewHolder myViewHolder = (HomeworkAdapter.MyViewHolder) holder;
         Homework homeworkItem = homeworkItems.get(position);
 
-        myViewHolder.courseName.setText(homeworkItem.getName());
+        myViewHolder.courseName.setText(homeworkItem.getSubjectItem().getSubjectName());
         myViewHolder.name.setText(homeworkItem.getName());
         myViewHolder.otherInfo.setText(homeworkItem.isFinished() ? "得分: " + (homeworkItem.getScore() == -1 ? "待批改" : homeworkItem.getScore()) : "截止日期: " + homeworkItem.getDeadline());
         myViewHolder.homeworkItem = homeworkItem;

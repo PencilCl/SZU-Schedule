@@ -44,54 +44,55 @@ public class BBService {
     private final static String bbUrl = "http://elearning.szu.edu.cn/webapps/portal/frameset.jsp"; // 成功进入bb的页面
     private final static String stuNumUrl = "http://elearning.szu.edu.cn/webapps/blackboard/execute/editUser?context=self_modify"; // 获取学号url
     private final static String courseUrl = "http://elearning.szu.edu.cn/webapps/portal/execute/tabs/tabAction";
+    
+    private static WebView webView;
+    private static Application mApplication;
 
-    private final static String stuNumReg = "<input.*id=\"studentId\".*value=\"(.*?)\".*/>";
-    private static Pattern stuNumPattern;
+    private static boolean getttingSubjectItems = false;
+    private static boolean getttingHomework = false;
 
-    private WebView webView;
-    private static ArrayList<SubjectItem> subjectItems;
-    private static HashMap<SubjectItem, List<Homework>> subjectItemListHashMap;
+    // 数据区
+    private static List<SubjectItem> subjectItems = new ArrayList<>();
+    private static List<Homework> mHomeworkList = new ArrayList<>();
+    private static HashMap<SubjectItem, List<Homework>> subjectItemListHashMap = new HashMap<>();
     private static HashMap<Homework, List<Attachment>> homeworkListHashMap = new HashMap<>();
-    private BBService() {
-        stuNumPattern = Pattern.compile(stuNumReg);
+
+    private static List<OnDataChangedListener> onDataChangedListeners = new ArrayList<>();
+
+    // 数据改变接口
+    public interface OnDataChangedListener {
+        void onSubjectItemsChanged(List<SubjectItem> subjectItems);
+        void onHomeworkChanged(List<Homework> homeworkList);
     }
 
-    public static BBService getInstance() {
-        return BBServiceHolder.holder;
+    public static void addOnDataChangedListener(OnDataChangedListener onDataChangedListener) {
+        if (onDataChangedListener != null) {
+            onDataChangedListeners.add(onDataChangedListener);
+            onDataChangedListener.onSubjectItemsChanged(subjectItems);
+            onDataChangedListener.onHomeworkChanged(mHomeworkList);
+        }
     }
 
-    private static class BBServiceHolder {
-        private static BBService holder = new BBService();
-    }
-
-    /**
-     * 清除现有数据对象
-     */
-    public static void clearCurrentData() {
-        subjectItems = null;
-        subjectItemListHashMap.clear();
-        homeworkListHashMap.clear();
-    }
-
-    /**
-     * 获取指定日期需要完成的作业
-     * @param date
-     * @return
-     */
-    public static List<TodoItem> getTodoList(Date date) {
-        List<TodoItem> todoItems = new ArrayList<>();
-        // TODO: 28/06/2017
-        return todoItems;
+    public static void removeOnDataChangedListener(OnDataChangedListener onDataChangedListener) {
+        onDataChangedListeners.remove(onDataChangedListener);
     }
 
     /**
-     * 初始化BBService
+     * 通知subjectItems被修改
      */
-    public void init(Application app) {
-        // 初始化WebView
-        this.webView = new WebView(app);
-        CommonUtil.initWebView(this.webView);
-        subjectItemListHashMap = new HashMap<>();
+    private static void dispatcherSubjectItemsChanged() {
+        for (OnDataChangedListener onDataChangedListener : onDataChangedListeners) {
+            onDataChangedListener.onSubjectItemsChanged(subjectItems);
+        }
+    }
+
+    /**
+     * 通知homework被修改
+     */
+    private static void dispatcherHomeworkChanged() {
+        for (OnDataChangedListener onDataChangedListener : onDataChangedListeners) {
+            onDataChangedListener.onHomeworkChanged(mHomeworkList);
+        }
     }
 
     /**
@@ -105,137 +106,67 @@ public class BBService {
         return Observable.create(new ObservableOnSubscribe<String>() {
             @Override
             public void subscribe(final ObservableEmitter<String> e) throws Exception {
-                BBService bbService = getInstance();
-                bbService.webView.setWebViewClient(new SZUAuthenticationWebViewClient(username, password, e, loginPageUrl, bbUrl));
-                bbService.webView.loadUrl(enterBBUrl);
+                webView.setWebViewClient(new SZUAuthenticationWebViewClient(username, password, e, loginPageUrl, bbUrl));
+                webView.loadUrl(enterBBUrl);
             }
         }).subscribeOn(AndroidSchedulers.mainThread());
     }
 
     /**
-     * 获取作业的附件列表
-     * @param homework
-     * @return
+     * 初始化Service数据
+     * 应用启动并完成登录后调用
      */
-    public static Observable<List<Attachment>> getAttachments(final Context context, final Homework homework) {
-        return Observable.create(new ObservableOnSubscribe<List<Attachment>>() {
+    public static void initData() {
+        new Thread(new Runnable() {
             @Override
-            public void subscribe(ObservableEmitter<List<Attachment>> e) throws Exception {
-                List<Attachment> attachments = homeworkListHashMap.get(homework);
-                if (attachments != null) {
-                    e.onNext(attachments);
-                    return ;
-                }
-                attachments = new ArrayList<>();
+            public void run() {
+                // 从本地获取数据
+                getSubjectFromLocalDatabase();
+                getAllHomeworkFromLocalDatabase();
+                getAllAttachments();
 
-                // 从数据库中获取
-                SQLiteDatabase db = DBHelper.getDB(context);
-                Cursor cursor = db.rawQuery("select attachment.* from homeworkAttachmentMap inner join attachment on homeworkAttachmentMap.homeworkID = ? and attachment.id = homeworkAttachmentMap.attachmentID", new String[]{String.valueOf(homework.getId())});
-                int idIndex = cursor.getColumnIndex("id");
-                int nameIndex = cursor.getColumnIndex("attachmentName");
-                int urlIndex = cursor.getColumnIndex("attachmentUrl");
-                while (cursor.moveToNext()) {
-                    attachments.add(new Attachment(
-                            cursor.getInt(idIndex),
-                            cursor.getString(nameIndex),
-                            cursor.getString(urlIndex)
-                    ));
-                }
-                homeworkListHashMap.put(homework, attachments);
-                e.onNext(attachments);
-            }
-        }).subscribeOn(Schedulers.io());
-    }
-
-    /**
-     * 获取当前登录用户的学号
-     * @return 成功返回学号，失败返回空字符
-     */
-    public static Observable<String> getStuNum() {
-        CookieManager cookieManager = CookieManager.getInstance();
-        return OkGo.<String>get(stuNumUrl)
-                .headers("Cookie", cookieManager.getCookie(baseUrl))
-                .converter(new StringConvert())
-                .adapt(new ObservableBody<String>())
-                .map(new Function<String, String>() {
-                    @Override
-                    public String apply(String s) throws Exception {
-                        Matcher matcher = stuNumPattern.matcher(s);
-                        if (matcher.find()) {
-                            return matcher.group(1);
-                        } else {
-                            return "";
-                        }
-                    }
-                })
-                .subscribeOn(Schedulers.io());
-    }
-
-    /**
-     * 获取当前用户所有科目列表
-     * @param context
-     * @return
-     */
-    public static Observable<ArrayList<SubjectItem>> getAllCourses(final Context context) {
-        return Observable.create(new ObservableOnSubscribe<ArrayList<SubjectItem>>() {
-            @Override
-            public void subscribe(ObservableEmitter<ArrayList<SubjectItem>> e) throws Exception {
-                if(subjectItems  == null){
-                    subjectItems = new ArrayList<>();
-                } else{
-                    e.onNext(subjectItems);
-                    return;
-                }
-                getSubjectFromLocalDatabase(context);
-                // 如果本地数据为空，则从网络中获取
+                // 从网络获取数据
                 if (subjectItems.size() == 0) {
-                    System.out.println("size == 0");
-                    getSubjectFromNetwork(context, e);
-                    return ;
+                    User user = UserService.getCurrentUser();
+                    loginBB(user.getAccount(), user.getPassword())
+                            .observeOn(Schedulers.io())
+                            .subscribe(new Consumer<String>() {
+                                @Override
+                                public void accept(String s) throws Exception {
+                                    refreshSubject();
+                                }
+                            }, new Consumer<Throwable>() {
+                                @Override
+                                public void accept(Throwable throwable) throws Exception {
+                                    throwable.printStackTrace();
+                                }
+                            });
                 }
-                e.onNext(subjectItems);
             }
-        }).subscribeOn(Schedulers.io());
+        }).start();
     }
 
     /**
-     * 获取指定学期的课程
-     * @return
+     * 刷新科目列表
      */
-    public static List<SubjectItem> getCoursesByTerm(List<SubjectItem> subjectItems, String termNum) {
-        List<SubjectItem> currentTerm = new ArrayList<>();
-        for (SubjectItem subjectItem : subjectItems) {
-            if (termNum.equals(subjectItem.getTermNum())) {
-                currentTerm.add(subjectItem);
-            }
-        }
-        return currentTerm;
+    public static void refreshSubject() {
+        getSubjectFromNetwork();
+        getAllHomeworkFromNetwork();
     }
 
     /**
-     * 更新科目列表
-     * @param context
-     * @return
+     * 刷新作业列表
      */
-    public static Observable<ArrayList<SubjectItem>> updateAllCourses(final Context context) {
-        return Observable.create(new ObservableOnSubscribe<ArrayList<SubjectItem>>() {
-            @Override
-            public void subscribe(ObservableEmitter<ArrayList<SubjectItem>> e) throws Exception {
-                if(subjectItems  == null){
-                    subjectItems = new ArrayList<>();
-                }
-                getSubjectFromNetwork(context, e);
-            }
-        }).subscribeOn(Schedulers.io());
+    public static void refreshHomework() {
+
     }
 
     /**
      * 本地获取科目列表
-     * @param context
      */
-    private  static void getSubjectFromLocalDatabase(Context context){
-        SQLiteDatabase db = DBHelper.getDB(context);
-        Cursor cursor = db.rawQuery("SELECT * FROM subject",null);
+    private static void getSubjectFromLocalDatabase(){
+        SQLiteDatabase db = DBHelper.getDB(mApplication);
+        Cursor cursor = db.rawQuery("SELECT subject.* FROM blackboard INNER JOIN subject ON blackboard.studentID = ? AND blackboard.subjectID = subject.id", new String[] {String.valueOf(UserService.getCurrentUser().getId())});
         int idIndex = cursor.getColumnIndex("id");
         int subjectNameIndex = cursor.getColumnIndex("subjectName");
         int courseNumIndex = cursor.getColumnIndex("courseNum");
@@ -248,241 +179,295 @@ public class BBService {
                     cursor.getString(courseIDIndex),
                     cursor.getString(courseNumIndex),
                     cursor.getString(termNumIndex)
-                    );
+            );
             subjectItems.add(subjectItem);
+            dispatcherSubjectItemsChanged();
         }
         cursor.close();
         db.close();
+    }
+
+    /**
+     * 从本地数据库获取所有科目的作业列表
+     */
+    private static void getAllHomeworkFromLocalDatabase() {
+        SQLiteDatabase db = DBHelper.getDB(mApplication);
+        for (SubjectItem subjectItem : subjectItems) {
+            List<Homework> homeworkList = new ArrayList<>();
+            Cursor cursor = db.rawQuery("SELECT homework.* FROM subjectHomeworkMap INNER JOIN homework ON subjectHomeworkMap.subjectID = ? AND homework.id = subjectHomeworkMap.homeworkID", new String[]{String.valueOf(subjectItem.getId())});
+            int idIndex = cursor.getColumnIndex("id");
+            int homeworkNameIndex = cursor.getColumnIndex("homeworkName");
+            int descriptionIndex = cursor.getColumnIndex("description");
+            int scoreIndex = cursor.getColumnIndex("score");
+            int deadlineIndex = cursor.getColumnIndex("deadline");
+            int finishedIndex = cursor.getColumnIndex("finished");
+
+            while (cursor.moveToNext()) {
+                Homework homework = new Homework(
+                        cursor.getInt(idIndex),
+                        cursor.getString(homeworkNameIndex),
+                        cursor.getString(descriptionIndex),
+                        cursor.getInt(scoreIndex),
+                        cursor.getString(deadlineIndex),
+                        cursor.getInt(finishedIndex),
+                        subjectItem
+                );
+                homeworkList.add(homework);
+                mHomeworkList.add(homework);
+                dispatcherHomeworkChanged();
+            }
+            subjectItemListHashMap.put(subjectItem, homeworkList);
+            cursor.close();
+        }
+        db.close();
+    }
+
+    /**
+     * 获取所有作业的附件列表
+     * @return
+     */
+    public static void getAllAttachments() {
+        SQLiteDatabase db = DBHelper.getDB(mApplication);
+        for (Homework homework : mHomeworkList) {
+            List<Attachment> attachments = new ArrayList<>();
+            Cursor cursor = db.rawQuery("SELECT attachment.* FROM homeworkAttachmentMap INNER JOIN attachment ON homeworkAttachmentMap.homeworkID = ? AND attachment.id = homeworkAttachmentMap.attachmentID", new String[]{String.valueOf(homework.getId())});
+            int idIndex = cursor.getColumnIndex("id");
+            int nameIndex = cursor.getColumnIndex("attachmentName");
+            int urlIndex = cursor.getColumnIndex("attachmentUrl");
+            while (cursor.moveToNext()) {
+                attachments.add(new Attachment(
+                        cursor.getInt(idIndex),
+                        cursor.getString(nameIndex),
+                        cursor.getString(urlIndex)
+                ));
+            }
+            homeworkListHashMap.put(homework, attachments);
+        }
+        db.close();
+    }
+
+    /**
+     * 获取指定作业的附件
+     * @param homework
+     */
+    public static List<Attachment> getAttachment(Homework homework) {
+        return homeworkListHashMap.get(homework);
     }
 
     /**
      * 从外网获取科目列表
-     * @param context
      * @return
      */
-    private  static void getSubjectFromNetwork(final Context context, final ObservableEmitter<ArrayList<SubjectItem>> e){
-        User user = UserService.getCurrentUser();
-        loginBB(user.getAccount(), user.getPassword())
-                .subscribe(new Consumer<String>() {
-                    @Override
-                    public void accept(String s) throws Exception {
-                        okhttp3.Response response = OkGo.post(courseUrl)
-                                .headers("Cookie",CookieManager.getInstance().getCookie(baseUrl))
-                                .params("action","refreshAjaxModule")
-                                .params("modId","_25_1")
-                                .params("tabId","_2_1")
-                                .params("tab_tab_group_id","_2_1")
-                                .execute();
-                        String html = response.body().string();
-                        Pattern pattern = Pattern.compile("<a href=\"(.*?)\".*>(.*?)</a>");
-                        Matcher matcher = pattern.matcher(html);
-                        SQLiteDatabase db = DBHelper.getDB(context);
-                        //清空原有数据
-                        db.execSQL("DELETE FROM subject");
-                        subjectItems.clear();
-                        while(matcher.find()){
-                            String link = matcher.group(1).trim();
-                            String info = matcher.group(2).trim();
-                            String courseName = info.substring(info.indexOf(":") + 2);
-                            String termNum = info.substring(0, 5);
-                            String courseNum = info.substring(6, info.indexOf(":"));
-                            String[] str = link.split("%3D");
-                            String courseId = str[str.length-1].split("%26")[0];
-                            SubjectItem course = new SubjectItem(-1,courseName,courseId,courseNum,termNum);
-                            ContentValues cv = new ContentValues();
-                            cv.put("subjectName",courseName);
-                            cv.put("courseNum",courseNum);
-                            cv.put("termNum",termNum);
-                            cv.put("courseId",courseId);
-                            db.insert("subject",null,cv);
-                            // 获取最后插入的记录id
-                            Cursor cursor = db.rawQuery("select last_insert_rowid() from subject", null);
-                            int lastId = 0;
-                            if(cursor.moveToFirst()) lastId = cursor.getInt(0);
-                            cursor.close();
-                            course.setId(lastId);
-                            subjectItems.add(course);
-                        }
-                        db.close();
-                        e.onNext(subjectItems);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        e.onNext(subjectItems);
-                    }
-                });
-    }
-
-    /**
-     * 通过课程获取相应的作业信息
-     * @return
-     */
-    public static Observable<List<Homework>> getHomework(final Context context, final SubjectItem subjectItem) {
-        return Observable.create(new ObservableOnSubscribe<List<Homework>>() {
-            @Override
-            public void subscribe(ObservableEmitter<List<Homework>> e) throws Exception {
-                List<Homework> homeworkList = subjectItemListHashMap.get(subjectItem);
-                if (homeworkList != null) {
-                    e.onNext(homeworkList);
-                    return ;
-                }
-                // 从本地数据库获取数据
-                homeworkList = getHomeworkFromLocalDatabase(context, subjectItem);
-                if (homeworkList.size() != 0) {
-                    subjectItemListHashMap.put(subjectItem, homeworkList);
-                    e.onNext(homeworkList);
-                    return ;
-                }
-                // 从网络获取数据
-                homeworkList = getHomeworkFromNetwork(context, subjectItem);
-                if (homeworkList == null) {
-//                    e.onError(new Throwable("获取作业信息失败"));
-                } else {
-                    subjectItemListHashMap.put(subjectItem, homeworkList);
-                    e.onNext(homeworkList);
-                }
-            }
-        }).subscribeOn(Schedulers.io());
-    }
-
-    /**
-     * 从本地数据库获取指定科目的作业列表
-     * @param context
-     * @param subjectItem
-     * @return
-     */
-    private static List<Homework> getHomeworkFromLocalDatabase(Context context, SubjectItem subjectItem) {
-        List<Homework> homeworkList = new ArrayList<>();
-        SQLiteDatabase db = DBHelper.getDB(context);
-        Cursor cursor = db.rawQuery("select homework.* from subjectHomeworkMap inner join homework on subjectHomeworkMap.subjectID = ? and homework.id = subjectHomeworkMap.homeworkID", new String[]{String.valueOf(subjectItem.getId())});
-        int idIndex = cursor.getColumnIndex("id");
-        int homeworkNameIndex = cursor.getColumnIndex("homeworkName");
-        int descriptionIndex = cursor.getColumnIndex("description");
-        int scoreIndex = cursor.getColumnIndex("score");
-        int deadlineIndex = cursor.getColumnIndex("deadline");
-        int finishedIndex = cursor.getColumnIndex("finished");
-
-        while (cursor.moveToNext()) {
-            Homework homework = new Homework(
-                    cursor.getInt(idIndex),
-                    cursor.getString(homeworkNameIndex),
-                    cursor.getString(descriptionIndex),
-                    cursor.getInt(scoreIndex),
-                    cursor.getString(deadlineIndex),
-                    cursor.getInt(finishedIndex)
-            );
-            homeworkList.add(homework);
-        }
-        db.close();
-        cursor.close();
-        return homeworkList;
-    }
-
-    /**
-     * 从网络上获取指定课程的作业列表
-     * 并保存到数据库中
-     * @param context
-     * @param subjectItem
-     * @return 成功返回作业数组, 失败返回null
-     */
-    private static List<Homework> getHomeworkFromNetwork(Context context, SubjectItem subjectItem) {
-        String cookie = CookieManager.getInstance().getCookie(baseUrl);
+    private static void getSubjectFromNetwork() {
         try {
-            List<Homework> homeworkList = new ArrayList<>();
-            Response response = OkGo.<String>get(String.format("http://elearning.szu.edu.cn/webapps/blackboard/execute/modulepage/view?course_id=%s&mode=view", subjectItem.getCourseId()))
-                    .headers("Cookie", cookie)
-                    .execute();
-            String html = response.body().string();
-            Pattern pattern = Pattern.compile("<a href=\"(.*?)\" target=\"_self\"><span title=\"网上作业\">网上作业</span></a>");
+            String html = OkGo.post(courseUrl)
+                    .headers("Cookie",CookieManager.getInstance().getCookie(baseUrl))
+                    .params("action","refreshAjaxModule")
+                    .params("modId","_25_1")
+                    .params("tabId","_2_1")
+                    .params("tab_tab_group_id","_2_1")
+                    .execute().body().string();
+            Pattern pattern = Pattern.compile("<a href=\"(.*?)\".*>(.*?)</a>");
             Matcher matcher = pattern.matcher(html);
-            if (!matcher.find()) {
-                // 找不到网上作业的地址，说明该课程没有作业。直接返回空数组
-                return homeworkList;
-            }
-            String homeworkUrl = matcher.group(1);
-            response = OkGo.<String>get(homeworkUrl)
-                    .headers("Cookie", cookie)
-                    .execute();
-            html = response.body().string();
-            pattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?(<ul class=\"attachments clearfix\">([\\w\\W]*?)</ul>)?[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
-            matcher = pattern.matcher(html);
-            SQLiteDatabase db = DBHelper.getDB(context);
-            while (matcher.find()) {
-                List<Attachment> attachments = new ArrayList<>();
-                String singleHomeworkHtml = matcher.group(0);
-                Pattern singleHomeworkPattern;
-                boolean hasAttachment = singleHomeworkHtml.contains("<th scope=\"row\">已附加文件:</th>");
-                if (hasAttachment) {
-                    singleHomeworkPattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?<ul class=\"attachments clearfix\">([\\w\\W]*?)</ul>[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
-                } else {
-                    singleHomeworkPattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
+            SQLiteDatabase db = DBHelper.getDB(mApplication);
+            // 清空原有数据
+            boolean flag = true;
+            while(matcher.find()){
+                if (flag) {
+                    clearDatabase(db);
+                    flag = false;
                 }
+                String link = matcher.group(1).trim();
+                String info = matcher.group(2).trim();
+                String[] str = link.split("%3D");
+                SubjectItem course = new SubjectItem(
+                        -1,
+                        info.substring(info.indexOf(":") + 2),
+                        str[str.length-1].split("%26")[0],
+                        info.substring(6, info.indexOf(":")),
+                        info.substring(0, 5));
+                saveSubjectToDataBase(course, db);
+                subjectItems.add(course);
+                dispatcherSubjectItemsChanged();
+            }
+            db.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-                Matcher singleHomeworkMatcher = singleHomeworkPattern.matcher(singleHomeworkHtml);
-                if (!singleHomeworkMatcher.find()) {
-                    System.out.println("not found");
+    /**
+     * 清除当前用户所有记录
+     * @param db
+     */
+    private static void clearDatabase(SQLiteDatabase db) {
+        clearHomeworkData(db);
+        for (SubjectItem subjectItem : subjectItems) {
+            db.delete("subject", "id=?", new String[] {String.valueOf(subjectItem)});
+        }
+        db.execSQL("DELETE FROM blackboard WHERE studentID = ?", new String[] {String.valueOf(UserService.getCurrentUser().getId())});
+        subjectItems.clear();
+        subjectItemListHashMap.clear();
+    }
+
+    /**
+     * 保存科目信息到数据库中
+     * @param subjectItem
+     */
+    private static void saveSubjectToDataBase(SubjectItem subjectItem, SQLiteDatabase db) {
+        ContentValues cv = new ContentValues();
+        cv.put("subjectName", subjectItem.getSubjectName());
+        cv.put("courseNum", subjectItem.getCourseNum());
+        cv.put("termNum", subjectItem.getTermNum());
+        cv.put("courseId", subjectItem.getTermNum());
+        db.insert("subject", null, cv);
+        // 获取最后插入的记录id
+        Cursor cursor = db.rawQuery("select last_insert_rowid() from subject", null);
+        if (cursor.moveToFirst()) {
+            subjectItem.setId(cursor.getInt(0));
+        }
+        cursor.close();
+
+        cv = new ContentValues();
+        cv.put("studentID", UserService.getCurrentUser().getId());
+        cv.put("subjectID", subjectItem.getId());
+        db.insert("blackboard", null, cv);
+    }
+
+
+    /**
+     * 从网络上获取所有课程的作业列表
+     * 并保存到数据库中
+     */
+    private static void getAllHomeworkFromNetwork() {
+        String cookie = CookieManager.getInstance().getCookie(baseUrl);
+        boolean flag = true;
+        for (SubjectItem subjectItem : subjectItems) {
+            try {
+                List<Homework> homeworkList = new ArrayList<>();
+                Response response = OkGo.<String>get(String.format("http://elearning.szu.edu.cn/webapps/blackboard/execute/modulepage/view?course_id=%s&mode=view", subjectItem.getCourseId()))
+                        .headers("Cookie", cookie)
+                        .execute();
+                String html = response.body().string();
+                Pattern pattern = Pattern.compile("<a href=\"(.*?)\" target=\"_self\"><span title=\"网上作业\">网上作业</span></a>");
+                Matcher matcher = pattern.matcher(html);
+                if (!matcher.find()) {
+                    // 找不到网上作业的地址，说明该课程没有作业。直接跳过
                     continue;
                 }
-
-                if (hasAttachment) {
-                    Pattern attachmentPattern = Pattern.compile("<a href=\"([\\w\\W]*?)\" target=\"_blank\">[\\w\\W]*?&nbsp;([\\w\\W]*?)</a>");
-                    Matcher attachmentMatcher = attachmentPattern.matcher(singleHomeworkMatcher.group(3));
-                    while (attachmentMatcher.find()) {
-                        attachments.add(new Attachment(-1, attachmentMatcher.group(2), attachmentMatcher.group(1)));
-                    }
-                }
-
-                response = OkGo.<String>get(baseUrl + singleHomeworkMatcher.group(1))
+                String homeworkUrl = matcher.group(1);
+                response = OkGo.<String>get(homeworkUrl)
                         .headers("Cookie", cookie)
                         .execute();
                 html = response.body().string();
-                String deadline = null;
-                int score = -1;
-                Pattern deadlinePattern = Pattern.compile("id=\"dueDate\" value=\"(.*?)\"");
-                Matcher deadlineMatcher = deadlinePattern.matcher(html);
-                if (deadlineMatcher.find()) {
-                    deadline = deadlineMatcher.group(1);
-                    if ("&nbsp;".equals(deadline)) {
-                        deadline = "null";
+                pattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?(<ul class=\"attachments clearfix\">([\\w\\W]*?)</ul>)?[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
+                matcher = pattern.matcher(html);
+                SQLiteDatabase db = DBHelper.getDB(mApplication);
+                while (matcher.find()) {
+                    if (flag) {
+                        clearHomeworkData(db);
+                        flag = false;
                     }
-                }
-                int finished = 0;
-                int index1 = html.indexOf("/webapps/blackboard/execute/attemptExpandListItemGenerator?attempt_id=");
-                if (index1 == -1) {
-                    index1 = html.indexOf("/webapps/blackboard/execute/groupAttemptExpandListItemGenerator?groupAttempt_id=");
-                }
-                if (index1 != -1) {
-                    finished = 1;
-                    String scoreUrl = html.substring(index1, html.indexOf("\"", index1));
-                    String scoreHtml = OkGo.<String>post(baseUrl + scoreUrl)
-                            .headers("Cookie", cookie)
-                            .params("course_id", subjectItem.getCourseId())
-                            .params("filterAttemptHref", "%2Fwebapps%2Fblackboard%2Fexecute%2FgradeAttempt")
-                            .execute().body().string();
-                    Pattern scorePattern = Pattern.compile("成绩 :.*?([0-9]+).*");
-                    Matcher scoreMatcher = scorePattern.matcher(scoreHtml);
-                    if (scoreMatcher.find()) {
-                        score = Integer.valueOf(scoreMatcher.group(1).trim());
+                    List<Attachment> attachments = new ArrayList<>();
+                    String singleHomeworkHtml = matcher.group(0);
+                    Pattern singleHomeworkPattern;
+                    boolean hasAttachment = singleHomeworkHtml.contains("<th scope=\"row\">已附加文件:</th>");
+                    if (hasAttachment) {
+                        singleHomeworkPattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?<ul class=\"attachments clearfix\">([\\w\\W]*?)</ul>[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
+                    } else {
+                        singleHomeworkPattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
                     }
-                }
-                Homework homework = new Homework(
-                        -1,
-                        singleHomeworkMatcher.group(2),
-                        singleHomeworkMatcher.group(hasAttachment ? 4 : 3).replaceAll("</div>", "\n").replaceAll("<div>", "").trim(),
-                        score,
-                        deadline,
-                        finished);
-                homeworkListHashMap.put(homework, attachments);
-                saveHomeworkToDatabase(db, homework, subjectItem, attachments);
-                homeworkList.add(homework);
-            }
-            db.close();
-            return homeworkList;
-        } catch (Exception e) {
 
+                    Matcher singleHomeworkMatcher = singleHomeworkPattern.matcher(singleHomeworkHtml);
+                    if (!singleHomeworkMatcher.find()) {
+                        System.out.println("not found");
+                        continue;
+                    }
+
+                    if (hasAttachment) {
+                        Pattern attachmentPattern = Pattern.compile("<a href=\"([\\w\\W]*?)\" target=\"_blank\">[\\w\\W]*?&nbsp;([\\w\\W]*?)</a>");
+                        Matcher attachmentMatcher = attachmentPattern.matcher(singleHomeworkMatcher.group(3));
+                        while (attachmentMatcher.find()) {
+                            attachments.add(new Attachment(-1, attachmentMatcher.group(2), attachmentMatcher.group(1)));
+                        }
+                    }
+
+                    response = OkGo.<String>get(baseUrl + singleHomeworkMatcher.group(1))
+                            .headers("Cookie", cookie)
+                            .execute();
+                    html = response.body().string();
+                    String deadline = null;
+                    int score = -1;
+                    Pattern deadlinePattern = Pattern.compile("id=\"dueDate\" value=\"(.*?)\"");
+                    Matcher deadlineMatcher = deadlinePattern.matcher(html);
+                    if (deadlineMatcher.find()) {
+                        deadline = deadlineMatcher.group(1);
+                        if ("&nbsp;".equals(deadline)) {
+                            deadline = "null";
+                        }
+                    }
+                    int finished = 0;
+                    int index1 = html.indexOf("/webapps/blackboard/execute/attemptExpandListItemGenerator?attempt_id=");
+                    if (index1 == -1) {
+                        index1 = html.indexOf("/webapps/blackboard/execute/groupAttemptExpandListItemGenerator?groupAttempt_id=");
+                    }
+                    if (index1 != -1) {
+                        finished = 1;
+                        String scoreUrl = html.substring(index1, html.indexOf("\"", index1));
+                        String scoreHtml = OkGo.<String>post(baseUrl + scoreUrl)
+                                .headers("Cookie", cookie)
+                                .params("course_id", subjectItem.getCourseId())
+                                .params("filterAttemptHref", "%2Fwebapps%2Fblackboard%2Fexecute%2FgradeAttempt")
+                                .execute().body().string();
+                        Pattern scorePattern = Pattern.compile("成绩 :.*?([0-9]+).*");
+                        Matcher scoreMatcher = scorePattern.matcher(scoreHtml);
+                        if (scoreMatcher.find()) {
+                            score = Integer.valueOf(scoreMatcher.group(1).trim());
+                        }
+                    }
+                    Homework homework = new Homework(
+                            -1,
+                            singleHomeworkMatcher.group(2),
+                            singleHomeworkMatcher.group(hasAttachment ? 4 : 3).replaceAll("</div>", "\n").replaceAll("<div>", "").trim(),
+                            score,
+                            deadline,
+                            finished,
+                            subjectItem);
+                    saveHomeworkToDatabase(db, homework, subjectItem, attachments);
+                    homeworkListHashMap.put(homework, attachments);
+                    mHomeworkList.add(homework);
+                    homeworkList.add(homework);
+                    dispatcherHomeworkChanged();
+                }
+                subjectItemListHashMap.put(subjectItem, homeworkList);
+                db.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-        return null;
+    }
+
+    /**
+     * 清除当前用户的所有作业信息
+     * @param db
+     */
+    private static void clearHomeworkData(SQLiteDatabase db) {
+        homeworkListHashMap.clear();
+        mHomeworkList.clear();
+        for (SubjectItem subjectItem : subjectItems) {
+            subjectItemListHashMap.put(subjectItem, new ArrayList<Homework>());
+            Cursor cursor = db.rawQuery("SELECT homework.id FROM subjectHomeworkMap INNER JOIN homework ON subjectHomeworkMap.subjectID = ? AND subjectHomeworkMap.homeworkID = homework.id", new String[] {String.valueOf(subjectItem.getId())});
+            while (cursor.moveToNext()) {
+                String homeworkID = cursor.getString(0);
+                Cursor cursor2 = db.rawQuery("SELECT attachment.id FROM homeworkAttachmentMap INNER JOIN attachment ON homeworkAttachmentMap.homeworkID = ? AND homeworkAttachmentMap.attachmentID = attachment.id", new String[] {homeworkID});
+                while (cursor2.moveToNext()) {
+                    db.delete("attachment", "id=?", new String[] {cursor2.getString(0)});
+                    db.delete("homeworkAttachmentMap", "attachmentID=?", new String[] {cursor2.getString(0)});
+                }
+                db.delete("homework", "id=?", new String[] {homeworkID});
+                db.delete("subjectHomeworkMap", "homeworkID=?", new String[] {homeworkID});
+            }
+        }
     }
 
     /**
@@ -534,4 +519,74 @@ public class BBService {
         cv.put("homeworkID", homework.getId());
         db.insert("subjectHomeworkMap", null, cv);
     }
+
+    /**
+     * 清除现有数据对象
+     */
+    public static void clearCurrentData() {
+        subjectItems = null;
+        subjectItemListHashMap.clear();
+        homeworkListHashMap.clear();
+    }
+
+    /**
+     * 获取指定日期需要完成的作业
+     * @param date
+     * @return
+     */
+    public static List<TodoItem> getTodoList(Date date) {
+        List<TodoItem> todoItems = new ArrayList<>();
+        // TODO: 28/06/2017
+        return todoItems;
+    }
+
+    /**
+     * 初始化BBService
+     */
+    public static void init(Application app) {
+        // 初始化WebView
+        webView = new WebView(app);
+        mApplication = app;
+        CommonUtil.initWebView(webView);
+    }
+
+    /**
+     * 获取当前登录用户的学号
+     * @return 成功返回学号，失败返回空字符
+     */
+    public static Observable<String> getStuNum() {
+        CookieManager cookieManager = CookieManager.getInstance();
+        return OkGo.<String>get(stuNumUrl)
+                .headers("Cookie", cookieManager.getCookie(baseUrl))
+                .converter(new StringConvert())
+                .adapt(new ObservableBody<String>())
+                .map(new Function<String, String>() {
+                    @Override
+                    public String apply(String s) throws Exception {
+                        Matcher matcher = Pattern.compile("<input.*id=\"studentId\".*value=\"(.*?)\".*/>").matcher(s);
+                        if (matcher.find()) {
+                            return matcher.group(1);
+                        } else {
+                            return "";
+                        }
+                    }
+                })
+                .subscribeOn(Schedulers.io());
+    }
+
+
+    /**
+     * 获取指定学期的课程
+     * @return
+     */
+    public static List<SubjectItem> getCoursesByTerm(List<SubjectItem> subjectItems, String termNum) {
+        List<SubjectItem> currentTerm = new ArrayList<>();
+        for (SubjectItem subjectItem : subjectItems) {
+            if (termNum.equals(subjectItem.getTermNum())) {
+                currentTerm.add(subjectItem);
+            }
+        }
+        return currentTerm;
+    }
+
 }

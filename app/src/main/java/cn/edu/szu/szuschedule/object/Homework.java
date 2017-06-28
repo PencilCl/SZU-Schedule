@@ -10,14 +10,20 @@ public class Homework {
     private Integer score; // 得分
     private String deadline; //截止日期
     private boolean finished;
+    private SubjectItem subjectItem;
 
-    public Homework(int id, String name, String description, Integer score, String deadline, int finished) {
+    public Homework(int id, String name, String description, Integer score, String deadline, int finished, SubjectItem subjectItem) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.score = score;
         this.deadline = deadline;
         this.finished = finished == 1;
+        this.subjectItem = subjectItem;
+    }
+
+    public void setSubjectItem(SubjectItem subjectItem) {
+        this.subjectItem = subjectItem;
     }
 
     public void setFinished(int finished) {
@@ -46,6 +52,10 @@ public class Homework {
 
     public boolean isFinished() {
         return finished;
+    }
+
+    public SubjectItem getSubjectItem() {
+        return subjectItem;
     }
 
     public int getId() {

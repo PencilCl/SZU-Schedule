@@ -15,6 +15,7 @@ import android.widget.Toast;
 import cn.edu.szu.szuschedule.HomeworkListActivity;
 import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.adapter.SubjectAdapter;
+import cn.edu.szu.szuschedule.object.Homework;
 import cn.edu.szu.szuschedule.object.SubjectItem;
 import cn.edu.szu.szuschedule.service.BBService;
 import cn.edu.szu.szuschedule.util.LoadingUtil;
@@ -29,39 +30,35 @@ import java.util.List;
 /**
  * Created by chenlin on 07/06/2017.
  */
-public class SubjectListFragment extends Fragment implements SubjectAdapter.OnClickListener {
-    private final static String currentTermNum = "20162";
-
+public class SubjectListFragment extends Fragment implements SubjectAdapter.OnClickListener, BBService.OnDataChangedListener {
     View view;
-    RecyclerView subjectList;
-    LoadingUtil loadingUtil;
-    SwipeRefreshLayout course_Refresh;
-    SubjectAdapter subadpter;
+    RecyclerView recyclerView;
+    SwipeRefreshLayout swipeRefreshLayout;
+    SubjectAdapter adapter;
+    List<SubjectItem> mSubjectItems;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_subject_list, null);
-        subjectList = (RecyclerView) view.findViewById(R.id.subject_recycle);
+        recyclerView = (RecyclerView) view.findViewById(R.id.subject_recycle);
         LinearLayoutManager sub_list_layoutManager = new LinearLayoutManager(getContext());
-        subjectList.setLayoutManager(sub_list_layoutManager);
+        recyclerView.setLayoutManager(sub_list_layoutManager);
 
-        course_Refresh = (SwipeRefreshLayout) view.findViewById(R.id.course_Refresh);
+        swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.course_Refresh);
 
-        course_Refresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                Toast.makeText(getActivity(),"正在刷新",Toast.LENGTH_SHORT).show();
-                getCourses(1);
-                subadpter.notifyDataSetChanged();
-                course_Refresh.setRefreshing(false);
-
+                BBService.refreshSubject();
+                swipeRefreshLayout.setRefreshing(false);
             }
         });
-        course_Refresh.setColorSchemeColors(getResources().getColor(android.R.color.holo_blue_bright),
+        swipeRefreshLayout.setColorSchemeColors(getResources().getColor(android.R.color.holo_blue_bright),
                 getResources().getColor(android.R.color.holo_orange_light),
                 getResources().getColor(android.R.color.holo_green_light));
-        loadingUtil = new LoadingUtil(getActivity());
-        getCourses(0);
+
+        BBService.addOnDataChangedListener(this);
 
         return view;
     }
@@ -72,32 +69,29 @@ public class SubjectListFragment extends Fragment implements SubjectAdapter.OnCl
         startActivity(new Intent(getContext(), HomeworkListActivity.class));
     }
 
-    public  void getCourses(final int i) {
-        loadingUtil.showLoading();
-        Observable<ArrayList<SubjectItem>> observable;
-        if (i == 0) {
-            observable = BBService.getAllCourses(getActivity());
-        } else {
-            observable = BBService.updateAllCourses(getActivity());
+    @Override
+    public void onSubjectItemsChanged(List<SubjectItem> subjectItems) {
+        if (mSubjectItems == null) {
+            mSubjectItems = subjectItems;
+            adapter = new SubjectAdapter(mSubjectItems);
+            recyclerView.setAdapter(adapter);
         }
-
-        observable.observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<ArrayList<SubjectItem>>() {
-                    @Override
-                    public void accept(@NonNull ArrayList<SubjectItem> subjectItems) throws Exception {
-                        List<SubjectItem> currentTerm = BBService.getCoursesByTerm(subjectItems, currentTermNum);
-                        subadpter = new SubjectAdapter(currentTerm);
-                        subadpter.setOnClickListener(SubjectListFragment.this);
-                        subjectList.setAdapter(subadpter);
-                        loadingUtil.hideLoading();
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(@NonNull Throwable throwable) throws Exception {
-                        loadingUtil.hideLoading();
-                        Toast.makeText(getActivity(), throwable.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                adapter.notifyDataSetChanged();
+            }
+        });
     }
 
+    @Override
+    public void onHomeworkChanged(List<Homework> homeworkList) {
+
+    }
+
+    @Override
+    public void onDestroyView() {
+        BBService.removeOnDataChangedListener(this);
+        super.onDestroyView();
+    }
 }

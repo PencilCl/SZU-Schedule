@@ -64,23 +64,17 @@ public class BlackBoardHomeworkInfoActivity extends AppCompatActivity {
             score.setVisibility(View.GONE);
         }
 
-        BBService.getAttachments(this, homework)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<List<Attachment>>() {
-                    @Override
-                    public void accept(List<Attachment> attachments) throws Exception {
-                        if (attachments.size() == 0) {
-                            attachmentList.setVisibility(View.GONE);
-                            attachment.setVisibility(View.GONE);
-                            return ;
-                        }
-                        StringBuilder attachmentLink = new StringBuilder();
-                        for (Attachment attachment : attachments) {
-                            attachmentLink.append(String.format(linkTemplate, attachment.getUrl(), attachment.getName()));
-                        }
-                        attachmentList.setText(Html.fromHtml(attachmentLink.toString()));
-                    }
-                });
+        List<Attachment> attachments = BBService.getAttachment(homework);
+        if (attachments.size() == 0) {
+            attachmentList.setVisibility(View.GONE);
+            attachment.setVisibility(View.GONE);
+            return ;
+        }
+        StringBuilder attachmentLink = new StringBuilder();
+        for (Attachment attachment : attachments) {
+            attachmentLink.append(String.format(linkTemplate, attachment.getUrl(), attachment.getName()));
+        }
+        attachmentList.setText(Html.fromHtml(attachmentLink.toString()));
     }
 
     @Override

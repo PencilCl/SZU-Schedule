@@ -24,13 +24,14 @@ import java.util.List;
 /**
  * Created by chenlin on 07/06/2017.
  */
-public class HomeworkListActivity extends AppCompatActivity implements HomeworkAdapter.OnClickListener {
+public class HomeworkListActivity extends AppCompatActivity implements HomeworkAdapter.OnClickListener, BBService.OnDataChangedListener {
     public static SubjectItem subjectItem;
 
     @Bind(R.id.homeworkList)
     RecyclerView homeworkList;
 
-    HomeworkAdapter homeworkAdapter;
+    List<Homework> mHomework = new ArrayList<>();
+    HomeworkAdapter homeworkAdapter = new HomeworkAdapter(mHomework);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -50,21 +51,33 @@ public class HomeworkListActivity extends AppCompatActivity implements HomeworkA
         LinearLayoutManager sub_list_layoutManager = new LinearLayoutManager(this);
         homeworkList.setLayoutManager(sub_list_layoutManager);
 
-        BBService.getHomework(this, subjectItem)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<List<Homework>>() {
-                    @Override
-                    public void accept(List<Homework> homework) throws Exception {
-                        homeworkAdapter = new HomeworkAdapter(homework);
-                        homeworkAdapter.setOnClickListener(HomeworkListActivity.this);
-                        homeworkList.setAdapter(homeworkAdapter);
-                    }
-                });
+        BBService.addOnDataChangedListener(this);
     }
 
     @Override
     public void onClick(int position, View view, Homework homework) {
         BlackBoardHomeworkInfoActivity.homework = homework;
         startActivity(new Intent(this, BlackBoardHomeworkInfoActivity.class));
+    }
+
+    @Override
+    public void onSubjectItemsChanged(List<SubjectItem> subjectItems) {
+
+    }
+
+    @Override
+    public void onHomeworkChanged(List<Homework> homeworkList) {
+        for (Homework homework : homeworkList) {
+            if (!mHomework.contains(homework)) {
+                mHomework.add(homework);
+            }
+        }
+        homeworkAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onDestroy() {
+        BBService.removeOnDataChangedListener(this);
+        super.onDestroy();
     }
 }
