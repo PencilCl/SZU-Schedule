@@ -12,15 +12,19 @@ import android.view.ViewGroup;
 
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import cn.edu.szu.szuschedule.LoginActivity;
 import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.UserTellUsActivity;
 
 import android.widget.Button;
+import cn.edu.szu.szuschedule.object.User;
 import cn.edu.szu.szuschedule.service.BBService;
 import cn.edu.szu.szuschedule.service.CurriculumScheduleService;
 import cn.edu.szu.szuschedule.service.LibraryService;
+import cn.edu.szu.szuschedule.service.UserService;
 import cn.edu.szu.szuschedule.util.LoadingUtil;
 import com.lzy.okgo.OkGo;
 import okhttp3.Call;
@@ -38,6 +42,15 @@ public class UserFragment extends Fragment{
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_user, null);
+
+        User user = UserService.getCurrentUser();
+        // 设置用户名
+        TextView name = (TextView) view.findViewById(R.id.name);
+        name.setText(user.getName());
+        // 设置头像
+        ImageView avatar = (ImageView) view.findViewById(R.id.avatar);
+        avatar.setImageResource("男".equals(user.getSex()) ? R.mipmap.boy : R.mipmap.girl);
+
         Button loginOut = (Button)view.findViewById(R.id.loginOut);
         loginOut.setOnClickListener(new View.OnClickListener() {
             @Override
