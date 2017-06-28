@@ -24,6 +24,7 @@ import io.reactivex.schedulers.Schedulers;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,177 +41,104 @@ public class LibraryService {
             "<TD width=\"35%\"><[\\s\\S]*?>([\\s\\S]*?)[／/][\\s\\S]*?</a>" +
             "[\\s\\S]*?<TD width=\"10%\">(.*?)</TD>";
 
-    private WebView webView;
+    private static WebView webView;
+    private static Application mApplication;
+    private static List<OnDataChangedListener> onDataChangedListeners = new ArrayList<>();
 
-    private static ArrayList<BookItem> bookItems;
+    // 数据区
+    private static List<BookItem> bookItems = new ArrayList<>();
 
-    public static LibraryService getInstance() {
-        return LibraryServiceHolder.holder;
+    public interface OnDataChangedListener {
+        void onBookItemsChanged(List<BookItem> bookItems);
     }
 
-    private static class LibraryServiceHolder {
-        private static LibraryService holder = new LibraryService();
+    public static void addOnDataChangedListener(OnDataChangedListener onDataChangedListener) {
+        if (onDataChangedListener != null) {
+            onDataChangedListeners.add(onDataChangedListener);
+            onDataChangedListener.onBookItemsChanged(bookItems);
+        }
     }
 
-    public void init(Application app) {
+    public static void removeOnDataChangedListener(OnDataChangedListener onDataChangedListener) {
+        onDataChangedListeners.remove(onDataChangedListener);
+    }
+
+    private static void dispatcherBookItemsChanged() {
+        for (OnDataChangedListener onDataChangedListener : onDataChangedListeners) {
+            onDataChangedListener.onBookItemsChanged(bookItems);
+        }
+    }
+
+    /**
+     * 登录图书馆
+     * @param username 校园卡号
+     * @param password 统一身份认证密码
+     * @return 登录失败抛出异常，登录成功返回空字符串
+     */
+    private static Observable<String> loginLibrary(final String username, final String password) {
+        return Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(final ObservableEmitter<String> e) throws Exception {
+                webView.setWebViewClient(new SZUAuthenticationWebViewClient(username, password, e, loginPageUrl, booksUrl));
+                webView.loadUrl(booksUrl);
+            }
+        }).subscribeOn(AndroidSchedulers.mainThread());
+    }
+
+    /**
+     * 初始化方法
+     * @param app
+     */
+    public static void init(Application app) {
         // 初始化WebView
-        this.webView = new WebView(app);
-        initWebView(this.webView);
+        mApplication = app;
+        webView = new WebView(app);
+        initWebView(webView);
     }
 
     /**
-     * 清除当前对象数据
+     * 初始化LibraryService数据
+     * 应在登录完成后开始调用
      */
-    public static void clearCurrentData() {
-        bookItems = null;
-    }
-
-    /**
-     * 获取当前用户借阅图书列表
-     * @return 失败抛出异常，成功返回图书列表
-     */
-    public static Observable<ArrayList<BookItem>> getBorrowedBooks(final Context context) {
-        return Observable.create(new ObservableOnSubscribe<ArrayList<BookItem>>() {
+    public static void initData() {
+        new Thread(new Runnable() {
             @Override
-            public void subscribe(ObservableEmitter<ArrayList<BookItem>> e) throws Exception {
-                if (bookItems == null) {
-                    bookItems = new ArrayList<BookItem>();
-                } else {
-                    // 如果bookItems已存在，则直接返回
-                    e.onNext(bookItems);
-                    return ;
-                }
+            public void run() {
+                // 从本地获取数据
+                getLocalDatabaseData();
 
-                getLocalDatabaseData(context);// 从本地数据库中获取
-                // 如果本地数据为空，则从网络中获取
                 if (bookItems.size() == 0) {
-                    getDataFromNetwork(context, e);
-                } else {
-                    e.onNext(bookItems);
+                    User user = UserService.getCurrentUser();
+                    loginLibrary(user.getAccount(), user.getPassword())
+                            .observeOn(Schedulers.io())
+                            .subscribe(new Consumer<String>() {
+                                @Override
+                                public void accept(String s) throws Exception {
+                                    getDataFromNetwork();
+                                }
+                            }, new Consumer<Throwable>() {
+                                @Override
+                                public void accept(Throwable throwable) throws Exception {
+                                    throwable.printStackTrace();
+                                }
+                            });
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        }).start();
     }
 
     /**
-     * 通过图书馆（外网）获取当前用户借阅图书列表
-     * @return 失败抛出异常，成功返回图书列表
+     * 刷新图书信息
      */
-    public static Observable<ArrayList<BookItem>> updateBorrowedBooks(final Context context) {
-        return Observable.create(new ObservableOnSubscribe<ArrayList<BookItem>>() {
-            @Override
-            public void subscribe(ObservableEmitter<ArrayList<BookItem>> e) throws Exception {
-                if (bookItems == null) {
-                    bookItems = new ArrayList<>();
-                }
-
-                getDataFromNetwork(context, e);// 从网络中获取
-                e.onNext(bookItems);
-               // System.out.println("更新图书信息");
-            }
-        }).subscribeOn(Schedulers.io());
-    }
-
-    /**
-     * 获取指定日期需要归还的书本
-     * @param date
-     * @return
-     */
-    public static Observable<ArrayList<TodoItem>> getTodoList (final Context context,final Date date) {
-        return getBorrowedBooks(context)
-                .map(new Function<ArrayList<BookItem>, ArrayList<TodoItem>>() {
-                    @Override
-                    public ArrayList<TodoItem> apply(ArrayList<BookItem> bookItems) throws Exception {
-                        ArrayList<TodoItem> todoItems = new ArrayList<>();
-                        for (BookItem bookItem : bookItems) {
-                            String Date = date.getYear()+"";
-                            if(date.getMonth()<10){
-                                Date+="-0"+(date.getMonth()+1);
-                            }else{
-                                Date+="-"+(date.getMonth()+1);
-                            }
-                            if(date.getDate()<10){
-                                Date+="-0"+date.getDate();
-                            }else{
-                                Date+="-"+date.getDate();
-                            }
-                            if (bookItem.getEndDate().equals(Date)) {
-                                todoItems.add(new TodoItem("还书", bookItem.getBookName(), "00:00", "23:59"));
-                            }
-                        }
-                        return todoItems;
-                    }
-                });
-    }
-
-    /**
-     * 从网络上获取借阅数据
-     * 并保存到数据库中
-     * @return 成功返回null 失败返回错误信息;
-     */
-    private static void getDataFromNetwork(final Context context, final ObservableEmitter<ArrayList<BookItem>> e) {
-        final User user = UserService.getCurrentUser();
-        loginLibrary(user.getAccount(), user.getPassword())
-                .observeOn(Schedulers.io())
-                .flatMap(new Function<String, ObservableSource<String>>() {
-                    @Override
-                    public ObservableSource<String> apply(String s) throws Exception {
-                        CookieManager cookieManager = CookieManager.getInstance();
-                        return OkGo.<String>get(booksUrl)
-                                .headers("Cookie", cookieManager.getCookie(booksUrl))
-                                .converter(new StringConvert())
-                                .adapt(new ObservableBody<String>());
-                    }
-                })
-                .subscribe(new Consumer<String>() {
-                    @Override
-                    public void accept(String html) throws Exception {
-                        try {
-                            Pattern pattern = Pattern.compile(reg, Pattern.CASE_INSENSITIVE);
-                            Matcher matcher = pattern.matcher(html);
-                            SQLiteDatabase db = DBHelper.getDB(context);
-                            //清空原来的内容
-                            bookItems.clear();
-                            db.delete("library", "studentID = ?", new String[]{String.valueOf(user.getId())});
-                            while(matcher.find()) {
-                                BookItem book = new BookItem(-1, matcher.group(2), matcher.group(3), matcher.group(1));
-                                ContentValues cv = new ContentValues();
-                                cv.put("studentID", user.getId());
-                                cv.put("bookName", book.getBookName());
-                                cv.put("startDate", book.getStartDate());
-                                cv.put("endDate", book.getEndDate());
-                                db.insert("library", null, cv);
-                                // 获取最后插入的记录id
-                                Cursor cursor = db.rawQuery("select last_insert_rowid() from library", null);
-                                int lastId = 0;
-                                if (cursor.moveToFirst()) lastId = cursor.getInt(0);
-                                cursor.close();
-                                book.setId(lastId);
-                                bookItems.add(book);
-                            }
-                            db.close();
-                            e.onNext(bookItems);
-                            return ;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        e.onError(new Throwable("发生未知错误"));
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        e.onNext(bookItems);
-//                        e.onError(throwable);
-                    }
-                });
+    public static void refresh() {
+        getDataFromNetwork();
     }
 
     /**
      * 从本地数据库加载数据
-     * @param context
      */
-    private static void getLocalDatabaseData(Context context) {
-        SQLiteDatabase db = DBHelper.getDB(context);
+    private static void getLocalDatabaseData() {
+        SQLiteDatabase db = DBHelper.getDB(mApplication);
         User user = UserService.getCurrentUser();
         Cursor cursor = db.rawQuery("SELECT * FROM library where library.studentID = ?", new String[] {String.valueOf(user.getId())});
         int idIndex = cursor.getColumnIndex("id");
@@ -226,25 +154,92 @@ public class LibraryService {
             );
 
             bookItems.add(bookmark);
+            dispatcherBookItemsChanged();
         }
         cursor.close();
         db.close();
     }
 
+
     /**
-     * 登录图书馆
-     * @param username 校园卡号
-     * @param password 统一身份认证密码
-     * @return 登录失败抛出异常，登录成功返回空字符串
+     * 从网络上获取借阅数据
+     * 并保存到数据库中
+     * @return 成功返回null 失败返回错误信息;
      */
-    private static Observable<String> loginLibrary(final String username, final String password) {
-        return Observable.create(new ObservableOnSubscribe<String>() {
-            @Override
-            public void subscribe(final ObservableEmitter<String> e) throws Exception {
-                LibraryService libraryServiceService = getInstance();
-                libraryServiceService.webView.setWebViewClient(new SZUAuthenticationWebViewClient(username, password, e, loginPageUrl, booksUrl));
-                libraryServiceService.webView.loadUrl(booksUrl);
+    private static void getDataFromNetwork() {
+        try {
+            String html = OkGo.<String>get(booksUrl)
+                    .headers("Cookie", CookieManager.getInstance().getCookie(booksUrl))
+                    .execute().body().string();
+            Pattern pattern = Pattern.compile(reg, Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(html);
+            SQLiteDatabase db = DBHelper.getDB(mApplication);
+            //清空原来的内容
+            bookItems.clear();
+            dispatcherBookItemsChanged();
+            clearDatabase(db);
+            while(matcher.find()) {
+                BookItem book = new BookItem(-1, matcher.group(2), matcher.group(3), matcher.group(1));
+                saveBookItemToDatabase(book, db);
+                bookItems.add(book);
+                dispatcherBookItemsChanged();
             }
-        }).subscribeOn(AndroidSchedulers.mainThread());
+            db.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 清除数据库中当前用户的图书相关信息
+     */
+    private static void clearDatabase(SQLiteDatabase db) {
+        db.delete("library", "studentID = ?", new String[]{String.valueOf(UserService.getCurrentUser().getId())});
+    }
+
+    private static void saveBookItemToDatabase(BookItem bookItem, SQLiteDatabase db) {
+        ContentValues cv = new ContentValues();
+        cv.put("studentID", UserService.getCurrentUser().getId());
+        cv.put("bookName", bookItem.getBookName());
+        cv.put("startDate", bookItem.getStartDate());
+        cv.put("endDate", bookItem.getEndDate());
+        db.insert("library", null, cv);
+        // 获取最后插入的记录id
+        Cursor cursor = db.rawQuery("select last_insert_rowid() from library", null);
+        if (cursor.moveToFirst()) bookItem.setId(cursor.getInt(0));
+        cursor.close();
+    }
+
+    /**
+     * 清除当前对象数据
+     */
+    public static void clearCurrentData() {
+        bookItems.clear();
+    }
+
+    /**
+     * 获取指定日期需要归还的书本
+     * @param date
+     * @return
+     */
+    public static ArrayList<TodoItem> getTodoList (Date date) {
+        ArrayList<TodoItem> todoItems = new ArrayList<>();
+        for (BookItem bookItem : bookItems) {
+            String Date = date.getYear() + "";
+            if (date.getMonth() < 10) {
+                Date += "-0" + (date.getMonth() + 1);
+            } else {
+                Date += "-" + (date.getMonth() + 1);
+            }
+            if (date.getDate() < 10) {
+                Date += "-0" + date.getDate();
+            } else {
+                Date += "-" + date.getDate();
+            }
+            if (bookItem.getEndDate().equals(Date)) {
+                todoItems.add(new TodoItem("还书", bookItem.getBookName(), "00:00", "23:59"));
+            }
+        }
+        return todoItems;
     }
 }

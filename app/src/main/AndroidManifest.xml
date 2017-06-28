@@ -30,7 +30,7 @@
         <activity
             android:name=".CurriculumScheduleActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
-        <activity android:name=".LibrarybooksActivity"/>
+        <activity android:name=".LibraryBooksActivity"/>
         <activity
             android:name=".GobyeActivity"
             android:theme="@style/AppTheme.NoActionBar"/>

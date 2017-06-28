@@ -20,7 +20,7 @@ import cn.edu.szu.szuschedule.ModuleActivity;
 import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.adapter.ModuleListAdapter;
 import cn.edu.szu.szuschedule.object.ModuleItem;
-import cn.edu.szu.szuschedule.LibrarybooksActivity;
+import cn.edu.szu.szuschedule.LibraryBooksActivity;
 import cn.edu.szu.szuschedule.view.SquareButton;
 
 /**
@@ -81,7 +81,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
             startActivity(new Intent(getContext(), BlackBoardActivity.class));
         } else if (moduleName.equals(getResources().getString(R.string.module_library))) {
             // click module book
-            startActivity(new Intent(getContext(), LibrarybooksActivity.class));
+            startActivity(new Intent(getContext(), LibraryBooksActivity.class));
 
         } else if (moduleName.equals(getResources().getString(R.string.module_gobye))) {
             // click module gobye

@@ -307,6 +307,7 @@ public class BBService {
         }
         db.execSQL("DELETE FROM blackboard WHERE studentID = ?", new String[] {String.valueOf(UserService.getCurrentUser().getId())});
         subjectItems.clear();
+        dispatcherSubjectItemsChanged();
         subjectItemListHashMap.clear();
     }
 
@@ -454,6 +455,7 @@ public class BBService {
     private static void clearHomeworkData(SQLiteDatabase db) {
         homeworkListHashMap.clear();
         mHomeworkList.clear();
+        dispatcherHomeworkChanged();
         for (SubjectItem subjectItem : subjectItems) {
             subjectItemListHashMap.put(subjectItem, new ArrayList<Homework>());
             Cursor cursor = db.rawQuery("SELECT homework.id FROM subjectHomeworkMap INNER JOIN homework ON subjectHomeworkMap.subjectID = ? AND subjectHomeworkMap.homeworkID = homework.id", new String[] {String.valueOf(subjectItem.getId())});
@@ -524,7 +526,8 @@ public class BBService {
      * 清除现有数据对象
      */
     public static void clearCurrentData() {
-        subjectItems = null;
+        subjectItems.clear();
+        mHomeworkList.clear();
         subjectItemListHashMap.clear();
         homeworkListHashMap.clear();
     }

@@ -15,6 +15,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.edu.szu.szuschedule.object.User;
 import cn.edu.szu.szuschedule.service.BBService;
+import cn.edu.szu.szuschedule.service.LibraryService;
 import cn.edu.szu.szuschedule.service.UserService;
 import cn.edu.szu.szuschedule.util.LoadingUtil;
 import io.reactivex.Observable;
@@ -60,6 +61,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     sp.getString("name", "")));
 
             BBService.initData();
+            LibraryService.initData();
             startActivity(new Intent(LoginActivity.this, MainActivity.class));
             finish();
         }
@@ -112,6 +114,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         if (success) {
                             loadingUtil.hideLoading();
                             BBService.initData();
+                            LibraryService.initData();
                             startActivity(new Intent(LoginActivity.this, MainActivity.class));
                             finish();
                         } else {

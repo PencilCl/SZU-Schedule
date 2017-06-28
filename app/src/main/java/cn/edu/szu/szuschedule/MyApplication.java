@@ -20,8 +20,7 @@ public class MyApplication extends Application {
 
         initOkGo();
         BBService.init(this);
-        LibraryService.getInstance()
-                .init(this);
+        LibraryService.init(this);
     }
 
     private void initOkGo() {

@@ -11,17 +11,12 @@ import android.view.ViewGroup;
 import android.widget.CalendarView;
 import android.widget.Toast;
 
-import cn.edu.szu.szuschedule.LibrarybooksActivity;
 import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.adapter.TodoListAdapter;
 import cn.edu.szu.szuschedule.object.TodoItem;
-import cn.edu.szu.szuschedule.service.BBService;
 import cn.edu.szu.szuschedule.service.CurriculumScheduleService;
 import cn.edu.szu.szuschedule.service.LibraryService;
-import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
 
 import java.util.ArrayList;
@@ -67,18 +62,12 @@ public class ScheduleFragment extends Fragment implements CalendarView.OnDateCha
 
     private void getTodoList() {
         todoItems.clear();
-        Observable.zip(CurriculumScheduleService.getTodoList(getActivity(), date), LibraryService.getTodoList(getActivity(), date), new BiFunction<ArrayList<TodoItem>, ArrayList<TodoItem>, ArrayList<TodoItem>>() {
-            @Override
-            public ArrayList<TodoItem> apply(ArrayList<TodoItem> todoItems1, ArrayList<TodoItem> todoItems2) throws Exception {
-                todoItems.addAll(todoItems1);
-                todoItems.addAll(todoItems2);
-                return todoItems;
-            }
-        })
+        CurriculumScheduleService.getTodoList(getActivity(), date)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<ArrayList<TodoItem>>() {
                     @Override
-                    public void accept(ArrayList<TodoItem> todoItems) throws Exception {
+                    public void accept(ArrayList<TodoItem> todoItemArrayList) throws Exception {
+                        todoItems.addAll(todoItemArrayList);
                         adapter.notifyDataSetChanged();
                     }
                 }, new Consumer<Throwable>() {
@@ -88,5 +77,7 @@ public class ScheduleFragment extends Fragment implements CalendarView.OnDateCha
                         Toast.makeText(getActivity(), throwable.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
+        todoItems.addAll(LibraryService.getTodoList(date));
+        adapter.notifyDataSetChanged();
     }
 }
