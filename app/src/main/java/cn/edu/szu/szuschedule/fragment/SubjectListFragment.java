@@ -74,6 +74,7 @@ public class SubjectListFragment extends Fragment implements SubjectAdapter.OnCl
         if (mSubjectItems == null) {
             mSubjectItems = subjectItems;
             adapter = new SubjectAdapter(mSubjectItems);
+            adapter.setOnClickListener(this);
             recyclerView.setAdapter(adapter);
         }
         getActivity().runOnUiThread(new Runnable() {

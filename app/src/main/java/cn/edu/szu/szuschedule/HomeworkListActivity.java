@@ -50,6 +50,8 @@ public class HomeworkListActivity extends AppCompatActivity implements HomeworkA
 
         LinearLayoutManager sub_list_layoutManager = new LinearLayoutManager(this);
         homeworkList.setLayoutManager(sub_list_layoutManager);
+        homeworkList.setAdapter(homeworkAdapter);
+        homeworkAdapter.setOnClickListener(this);
 
         BBService.addOnDataChangedListener(this);
     }
@@ -68,7 +70,7 @@ public class HomeworkListActivity extends AppCompatActivity implements HomeworkA
     @Override
     public void onHomeworkChanged(List<Homework> homeworkList) {
         for (Homework homework : homeworkList) {
-            if (!mHomework.contains(homework)) {
+            if (homework.getSubjectItem() == subjectItem && !mHomework.contains(homework)) {
                 mHomework.add(homework);
             }
         }

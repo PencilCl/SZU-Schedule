@@ -1,5 +1,6 @@
 package cn.edu.szu.szuschedule.fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -8,6 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import cn.edu.szu.szuschedule.BlackBoardHomeworkInfoActivity;
 import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.adapter.HomeworkAdapter;
 import cn.edu.szu.szuschedule.object.Homework;
@@ -19,7 +21,7 @@ import java.util.List;
 /**
  * Created by chenlin on 07/06/2017.
  */
-public class HomeworkListFragment extends Fragment implements BBService.OnDataChangedListener {
+public class HomeworkListFragment extends Fragment implements BBService.OnDataChangedListener, HomeworkAdapter.OnClickListener {
     View view;
     RecyclerView recyclerView;
     List<Homework> homework;
@@ -47,15 +49,21 @@ public class HomeworkListFragment extends Fragment implements BBService.OnDataCh
         if (homework == null) {
             homework = homeworkList;
             adapter = new HomeworkAdapter(homeworkList);
+            adapter.setOnClickListener(this);
             recyclerView.setAdapter(adapter);
         }
-        System.out.println(homeworkList.size());
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 adapter.notifyDataSetChanged();
             }
         });
+    }
+
+    @Override
+    public void onClick(int position, View view, Homework homework) {
+        BlackBoardHomeworkInfoActivity.homework = homework;
+        startActivity(new Intent(getActivity(), BlackBoardHomeworkInfoActivity.class));
     }
 
     @Override
