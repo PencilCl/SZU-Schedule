@@ -9,12 +9,13 @@ import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.object.Homework;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by chenlin on 07/06/2017.
  */
 public class HomeworkAdapter extends RecyclerView.Adapter implements View.OnClickListener {
-    private ArrayList<Homework> homeworkItems;
+    private List<Homework> homeworkItems;
     private RecyclerView mRecyclerView;
     private OnClickListener onClickListener;
 
@@ -26,7 +27,7 @@ public class HomeworkAdapter extends RecyclerView.Adapter implements View.OnClic
         this.onClickListener = onClickListener;
     }
 
-    public HomeworkAdapter(ArrayList<Homework> moduleItems) {
+    public HomeworkAdapter(List<Homework> moduleItems) {
         this.homeworkItems = moduleItems;
     }
 
@@ -49,7 +50,7 @@ public class HomeworkAdapter extends RecyclerView.Adapter implements View.OnClic
 
         myViewHolder.courseName.setText(homeworkItem.getName());
         myViewHolder.name.setText(homeworkItem.getName());
-        myViewHolder.otherInfo.setText(homeworkItem.getScore() == null ? "截止日期: " + homeworkItem.getDeadline() : "得分: " + homeworkItem.getScore());
+        myViewHolder.otherInfo.setText(homeworkItem.isFinished() ? "得分: " + (homeworkItem.getScore() == -1 ? "待批改" : homeworkItem.getScore()) : "截止日期: " + homeworkItem.getDeadline());
         myViewHolder.homeworkItem = homeworkItem;
     }
 

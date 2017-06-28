@@ -52,7 +52,7 @@ public class BBService {
     private WebView webView;
     private static ArrayList<SubjectItem> subjectItems;
     private static HashMap<SubjectItem, List<Homework>> subjectItemListHashMap;
-    private static HashMap<Homework, List<Attachment>> homeworkListHashMap;
+    private static HashMap<Homework, List<Attachment>> homeworkListHashMap = new HashMap<>();
     private BBService() {
         stuNumPattern = Pattern.compile(stuNumReg);
     }
@@ -109,8 +109,34 @@ public class BBService {
      * @param homework
      * @return
      */
-    public static List<Attachment> getAttachments(Homework homework) {
-        return homeworkListHashMap.get(homework);
+    public static Observable<List<Attachment>> getAttachments(final Context context, final Homework homework) {
+        return Observable.create(new ObservableOnSubscribe<List<Attachment>>() {
+            @Override
+            public void subscribe(ObservableEmitter<List<Attachment>> e) throws Exception {
+                List<Attachment> attachments = homeworkListHashMap.get(homework);
+                if (attachments != null) {
+                    e.onNext(attachments);
+                    return ;
+                }
+                attachments = new ArrayList<>();
+
+                // 从数据库中获取
+                SQLiteDatabase db = DBHelper.getDB(context);
+                Cursor cursor = db.rawQuery("select attachment.* from homeworkAttachmentMap inner join attachment on homeworkAttachmentMap.homeworkID = ? and attachment.id = homeworkAttachmentMap.attachmentID", new String[]{String.valueOf(homework.getId())});
+                int idIndex = cursor.getColumnIndex("id");
+                int nameIndex = cursor.getColumnIndex("attachmentName");
+                int urlIndex = cursor.getColumnIndex("attachmentUrl");
+                while (cursor.moveToNext()) {
+                    attachments.add(new Attachment(
+                            cursor.getInt(idIndex),
+                            cursor.getString(nameIndex),
+                            cursor.getString(urlIndex)
+                    ));
+                }
+                homeworkListHashMap.put(homework, attachments);
+                e.onNext(attachments);
+            }
+        }).subscribeOn(Schedulers.io());
     }
 
     /**
@@ -136,6 +162,12 @@ public class BBService {
                 })
                 .subscribeOn(Schedulers.io());
     }
+
+    /**
+     * 获取当前用户所有科目列表
+     * @param context
+     * @return
+     */
     public static Observable<ArrayList<SubjectItem>> getAllCourses(final Context context) {
         return Observable.create(new ObservableOnSubscribe<ArrayList<SubjectItem>>() {
             @Override
@@ -146,10 +178,10 @@ public class BBService {
                     e.onNext(subjectItems);
                     return;
                 }
-                getLocalDatabaseData(context);
+                getSubjectFromLocalDatabase(context);
                 // 如果本地数据为空，则从网络中获取
                 if (subjectItems.size() == 0) {
-                    String error = getDataFromNetwork(context);
+                    String error = getSubjectFromNetwork(context);
                     if (error == null) {
                         e.onNext(subjectItems);
                     } else {
@@ -162,6 +194,11 @@ public class BBService {
         }).subscribeOn(Schedulers.io());
     }
 
+    /**
+     * 更新科目列表
+     * @param context
+     * @return
+     */
     public static Observable<ArrayList<SubjectItem>> updateAllCourses(final Context context) {
         return Observable.create(new ObservableOnSubscribe<ArrayList<SubjectItem>>() {
             @Override
@@ -169,19 +206,22 @@ public class BBService {
                 if(subjectItems  == null){
                     subjectItems = new ArrayList<>();
                 }
-                System.out.println("updateAllCoures");
-                    String error = getDataFromNetwork(context);
-                    if (error == null) {
-                        e.onNext(subjectItems);
-                    } else {
-                        e.onError(new Throwable(error));
-                    }
+                String error = getSubjectFromNetwork(context);
+                if (error == null) {
+                    e.onNext(subjectItems);
+                } else {
+                    e.onError(new Throwable(error));
+                }
                 }
 
         }).subscribeOn(Schedulers.io());
     }
-    //从本地获取数据
-    private  static void getLocalDatabaseData(Context context){
+
+    /**
+     * 本地获取科目列表
+     * @param context
+     */
+    private  static void getSubjectFromLocalDatabase(Context context){
         SQLiteDatabase db = DBHelper.getDB(context);
         Cursor cursor = db.rawQuery("SELECT * FROM subject",null);
         int idIndex = cursor.getColumnIndex("id");
@@ -197,23 +237,21 @@ public class BBService {
                     cursor.getString(courseNumIndex),
                     cursor.getString(termNumIndex)
                     );
-            System.out.println("本地获取      "+ subjectItem.getCourseNum());
-
             subjectItems.add(subjectItem);
         }
         cursor.close();
         db.close();
     }
-    //从外网获取
-    private  static String getDataFromNetwork(Context context){
-        CookieManager cookieManager = CookieManager.getInstance();
-        if(cookieManager.getCookie(courseUrl) == null){
-            return "获取课程信息失败";
-        }
-        try{
 
+    /**
+     * 从外网获取科目列表
+     * @param context
+     * @return
+     */
+    private  static String getSubjectFromNetwork(Context context){
+        try{
             okhttp3.Response response = OkGo.post(courseUrl)
-                    .headers("Cookie",cookieManager.getCookie(baseUrl))
+                    .headers("Cookie",CookieManager.getInstance().getCookie(baseUrl))
                     .params("action","refreshAjaxModule")
                     .params("modId","_25_1")
                     .params("tabId","_2_1")
@@ -248,10 +286,8 @@ public class BBService {
                 cursor.close();
                 course.setId(lastId);
                 subjectItems.add(course);
-                System.out.println(String.format("学期号: %s\n课程名: %s\n课程号: %s\n链接: %s", termNum, courseName, courseNum, link));
-                System.out.println("------------------------------");
-
             }
+            db.close();
             return null;
 
         }catch (Exception e){
@@ -307,6 +343,7 @@ public class BBService {
         int descriptionIndex = cursor.getColumnIndex("description");
         int scoreIndex = cursor.getColumnIndex("score");
         int deadlineIndex = cursor.getColumnIndex("deadline");
+        int finishedIndex = cursor.getColumnIndex("finished");
 
         while (cursor.moveToNext()) {
             Homework homework = new Homework(
@@ -314,10 +351,13 @@ public class BBService {
                     cursor.getString(homeworkNameIndex),
                     cursor.getString(descriptionIndex),
                     cursor.getInt(scoreIndex),
-                    cursor.getString(deadlineIndex)
+                    cursor.getString(deadlineIndex),
+                    cursor.getInt(finishedIndex)
             );
             homeworkList.add(homework);
         }
+        db.close();
+        cursor.close();
         return homeworkList;
     }
 
@@ -366,54 +406,62 @@ public class BBService {
                     System.out.println("not found");
                     continue;
                 }
-                System.out.println(String.format("实验名: %s", singleHomeworkMatcher.group(2)));
-                System.out.println(String.format("实验地址: %s", singleHomeworkMatcher.group(1)));
 
                 if (hasAttachment) {
                     Pattern attachmentPattern = Pattern.compile("<a href=\"([\\w\\W]*?)\" target=\"_blank\">[\\w\\W]*?&nbsp;([\\w\\W]*?)</a>");
                     Matcher attachmentMatcher = attachmentPattern.matcher(singleHomeworkMatcher.group(3));
                     while (attachmentMatcher.find()) {
                         attachments.add(new Attachment(-1, attachmentMatcher.group(2), attachmentMatcher.group(1)));
-                        System.out.println(String.format("附件名: %s\n附件链接: %s", attachmentMatcher.group(2), attachmentMatcher.group(1)));
                     }
                 }
-                System.out.println(String.format("实验要求: \n%s", singleHomeworkMatcher.group(hasAttachment ? 4 : 3).replaceAll("</div>", "\n").replaceAll("<div>", "").trim())); // 过滤div标签
-                System.out.println("--------------------------------------------------");
 
-                response = OkGo.<String>get(singleHomeworkMatcher.group(1))
+                response = OkGo.<String>get(baseUrl + singleHomeworkMatcher.group(1))
                         .headers("Cookie", cookie)
                         .execute();
                 html = response.body().string();
                 String deadline = null;
                 int score = -1;
                 Pattern deadlinePattern = Pattern.compile("id=\"dueDate\" value=\"(.*?)\"");
-                matcher = deadlinePattern.matcher(html);
-                if (matcher.find()) {
-                    deadline = matcher.group(1);
+                Matcher deadlineMatcher = deadlinePattern.matcher(html);
+                if (deadlineMatcher.find()) {
+                    deadline = deadlineMatcher.group(1);
+                    if ("&nbsp;".equals(deadline)) {
+                        deadline = "null";
+                    }
                 }
-
-                String scoreHtml = "{\n" +
-                        "    \"itemListHtml\": \"  \\t  <h4>提交资料</h4>\\r\\n<p>\\r\\n 提交字段 :   \\r\\n \\t    </p>\\r\\n<p>\\r\\n 学生注释 :   \\r\\n \\t      </p>\\r\\n<p>\\r\\n 已附加文件 :   \\r\\n \\t <a href=\\\"/@@/B12706399799B8AE4C0C4BBF99490620/courses/1/20162-1500720006/attempt/_802053_1/s/%E5%AE%9E%E9%AA%8C1%2B2015150063%20.doc\\\"  target=\\\"_blank\\\" >  实验1+2015150063 .doc   </a> &nbsp; </p>\\r\\n \\t  <h4>教师反馈</h4>\\r\\n<p>\\r\\n 成绩 :   \\r\\n \\t  100.00 超出 100    </p>\\r\\n<p>\\r\\n 注释 :   \\r\\n \\t  <div class=\\\"vtbegenerated\\\">同学的最终实现效果非常好，在Visio的各种限制之下能够使用原生组件实现出美观的界面实属不易。另外，Visio在实际生产中更多的是一款生成流程图表的软件，所以在界面设计中确实存在诸多不足。在实际生产时的界面设计中，可以使用更专业更具有指向性的软件来进行设计。\\r\\n\\r\\n</div>    </p>\\r\\n<p>\\r\\n 已附加文件 :   \\r\\n \\t <a href=\\\"/@@/B12706399799B8AE4C0C4BBF99490620/courses/1/20162-1500720006/attempt/_802053_1/c/2015150063%E9%99%88%E6%9E%97%20-%20%E5%AE%9E%E9%AA%8C1%E8%BD%AF%E4%BB%B6%E7%95%8C%E9%9D%A2%E8%AE%BE%E8%AE%A1.doc\\\"  target=\\\"_blank\\\" >  2015150063陈林 - 实验1软件界面设计.doc   </a> &nbsp; </p>\\r\\n\",\n" +
-                        "    \"success\": \"true\"\n" +
-                        "}";
-                Pattern scorePattern = Pattern.compile("成绩 :.*?([0-9.]*?) 超出");
-                matcher = scorePattern.matcher(scoreHtml);
-                if (matcher.find()) {
-                    score = Integer.valueOf(matcher.group(1).trim());
+                int finished = 0;
+                int index1 = html.indexOf("/webapps/blackboard/execute/attemptExpandListItemGenerator?attempt_id=");
+                if (index1 == -1) {
+                    index1 = html.indexOf("/webapps/blackboard/execute/groupAttemptExpandListItemGenerator?groupAttempt_id=");
+                }
+                if (index1 != -1) {
+                    finished = 1;
+                    String scoreUrl = html.substring(index1, html.indexOf("\"", index1));
+                    String scoreHtml = OkGo.<String>post(baseUrl + scoreUrl)
+                            .headers("Cookie", cookie)
+                            .params("course_id", subjectItem.getCourseId())
+                            .params("filterAttemptHref", "%2Fwebapps%2Fblackboard%2Fexecute%2FgradeAttempt")
+                            .execute().body().string();
+                    Pattern scorePattern = Pattern.compile("成绩 :.*?([0-9]+).*");
+                    Matcher scoreMatcher = scorePattern.matcher(scoreHtml);
+                    if (scoreMatcher.find()) {
+                        score = Integer.valueOf(scoreMatcher.group(1).trim());
+                    }
                 }
                 Homework homework = new Homework(
                         -1,
                         singleHomeworkMatcher.group(2),
                         singleHomeworkMatcher.group(hasAttachment ? 4 : 3).replaceAll("</div>", "\n").replaceAll("<div>", "").trim(),
                         score,
-                        deadline);
+                        deadline,
+                        finished);
                 homeworkListHashMap.put(homework, attachments);
                 saveHomeworkToDatabase(db, homework, subjectItem, attachments);
                 homeworkList.add(homework);
             }
             db.close();
             return homeworkList;
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -433,6 +481,7 @@ public class BBService {
         cv.put("description", homework.getDescription());
         cv.put("deadline", homework.getDeadline());
         cv.put("score", homework.getScore());
+        cv.put("finished", homework.isFinished() ? 1 : 0);
         db.insert("homework", null, cv);
         // 获取最后插入的记录id
         Cursor cursor = db.rawQuery("select last_insert_rowid() from homework", null);

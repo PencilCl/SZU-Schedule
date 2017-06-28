@@ -22,10 +22,10 @@
 
     <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="8dp">
+            android:layout_height="match_parent">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                      android:orientation="vertical">
+                      android:orientation="vertical"
+                      android:padding="8dp">
             <TextView
                     android:id="@+id/name"
                     android:text="实验1 软件界面设计"
@@ -43,6 +43,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" android:layout_marginTop="10dp" android:textSize="18sp"/>
             <TextView
+                    android:id="@+id/attachment"
                     android:text="@string/bb_homework_info_attachment"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" android:layout_marginTop="10dp" android:textSize="18sp"/>
@@ -50,12 +51,14 @@
                     android:id="@+id/attachmentList"
                     android:text="实验6 系统设计及实现 模板.doc (实验6 系统设计及实现 模板.doc) "
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:textSize="18sp"/>
+                    android:layout_height="wrap_content" android:textSize="18sp" android:textColorLink="#7fa87f"
+                    android:linksClickable="true"/>
             <TextView
                     android:id="@+id/score"
                     android:text="得分： 90"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:layout_marginTop="10dp" android:textSize="18sp"/>
+                    android:layout_height="wrap_content" android:layout_marginTop="10dp" android:textSize="18sp"
+            />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

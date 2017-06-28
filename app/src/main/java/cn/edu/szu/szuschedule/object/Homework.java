@@ -9,13 +9,19 @@ public class Homework {
     private String description ;    //作业概括
     private Integer score; // 得分
     private String deadline; //截止日期
+    private boolean finished;
 
-    public Homework(int id, String name, String description, Integer score, String deadline) {
+    public Homework(int id, String name, String description, Integer score, String deadline, int finished) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.score = score;
         this.deadline = deadline;
+        this.finished = finished == 1;
+    }
+
+    public void setFinished(int finished) {
+        this.finished = finished == 1;
     }
 
     public void setId(int id) {
@@ -36,6 +42,10 @@ public class Homework {
 
     public void setDeadline(String deadline) {
         this.deadline = deadline;
+    }
+
+    public boolean isFinished() {
+        return finished;
     }
 
     public int getId() {

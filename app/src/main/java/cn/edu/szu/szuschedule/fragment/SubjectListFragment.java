@@ -1,9 +1,7 @@
 package cn.edu.szu.szuschedule.fragment;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -15,7 +13,6 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import cn.edu.szu.szuschedule.HomeworkListActivity;
-import cn.edu.szu.szuschedule.LibrarybooksActivity;
 import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.adapter.SubjectAdapter;
 import cn.edu.szu.szuschedule.object.SubjectItem;
@@ -34,7 +31,7 @@ import java.util.ArrayList;
 /**
  * Created by chenlin on 07/06/2017.
  */
-public class SubjectListFragment extends Fragment {
+public class SubjectListFragment extends Fragment implements SubjectAdapter.OnClickListener {
     View view;
     RecyclerView subjectList;
     ArrayList<SubjectItem> subjectItems;
@@ -70,6 +67,13 @@ public class SubjectListFragment extends Fragment {
 
         return view;
     }
+
+    @Override
+    public void onClick(int position, View view, SubjectItem subjectItem) {
+        HomeworkListActivity.subjectItem = subjectItem;
+        startActivity(new Intent(getContext(), HomeworkListActivity.class));
+    }
+
     public  void getCourses(final int i) {
        // loadingUtil.showLoading();
         User user = UserService.getCurrentUser();
@@ -87,12 +91,9 @@ public class SubjectListFragment extends Fragment {
                 .subscribe(new Consumer<ArrayList<SubjectItem>>() {
                     @Override
                     public void accept(@NonNull ArrayList<SubjectItem> SubjectItems) throws Exception {
-                        System.out.println("     sssss");
                         subjectItems = SubjectItems;
-                        for(int i = 0 ;i< subjectItems.size();i++){
-                            System.out.println(subjectItems.get(i).getCourseNum()+"     sssss");
-                        }
-                         subadpter = new SubjectAdapter(subjectItems);
+                        subadpter = new SubjectAdapter(subjectItems);
+                        subadpter.setOnClickListener(SubjectListFragment.this);
                         subjectList.setAdapter(subadpter);
                         //loadingUtil.hideLoading();
                     }

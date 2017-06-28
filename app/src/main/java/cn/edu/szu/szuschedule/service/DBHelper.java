@@ -50,6 +50,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "`homeworkName` varchar(255) NOT NULL," +
                 "`description` varchar(255) NOT NULL," +
                 "`score` int(11) DEFAULT NULL," +
+                "`finished` int(2) DEFAULT 0," +
                 "`deadline` varchar(255) NOT NULL)";
 
         String subjectHomeworkMapTable = "CREATE TABLE `subjectHomeworkMap` (" +

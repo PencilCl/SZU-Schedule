@@ -1,5 +1,6 @@
 package cn.edu.szu.szuschedule;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -11,16 +12,25 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.edu.szu.szuschedule.adapter.HomeworkAdapter;
 import cn.edu.szu.szuschedule.object.Homework;
+import cn.edu.szu.szuschedule.object.SubjectItem;
+import cn.edu.szu.szuschedule.service.BBService;
 import cn.edu.szu.szuschedule.util.DisplayUtil;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by chenlin on 07/06/2017.
  */
-public class HomeworkListActivity extends AppCompatActivity {
+public class HomeworkListActivity extends AppCompatActivity implements HomeworkAdapter.OnClickListener {
+    public static SubjectItem subjectItem;
+
     @Bind(R.id.homeworkList)
     RecyclerView homeworkList;
+
+    HomeworkAdapter homeworkAdapter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -40,10 +50,21 @@ public class HomeworkListActivity extends AppCompatActivity {
         LinearLayoutManager sub_list_layoutManager = new LinearLayoutManager(this);
         homeworkList.setLayoutManager(sub_list_layoutManager);
 
-        ArrayList<Homework> homeworkItems = new ArrayList<>();
-//        homeworkItems.add(new Homework("软件工程", "实验1 软件界面设计", "2017年3月27日 下午11时30分00秒", 100, this,"作业很难啊"));
-//        homeworkItems.add(new Homework("软件工程", "实验2 数据库建模", "2017年4月4日 下午10时00分00秒",100, this,"作业很难啊"));
+        BBService.getHomework(this, subjectItem)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<List<Homework>>() {
+                    @Override
+                    public void accept(List<Homework> homework) throws Exception {
+                        homeworkAdapter = new HomeworkAdapter(homework);
+                        homeworkAdapter.setOnClickListener(HomeworkListActivity.this);
+                        homeworkList.setAdapter(homeworkAdapter);
+                    }
+                });
+    }
 
-        homeworkList.setAdapter(new HomeworkAdapter(homeworkItems));
+    @Override
+    public void onClick(int position, View view, Homework homework) {
+        BlackBoardHomeworkInfoActivity.homework = homework;
+        startActivity(new Intent(this, BlackBoardHomeworkInfoActivity.class));
     }
 }

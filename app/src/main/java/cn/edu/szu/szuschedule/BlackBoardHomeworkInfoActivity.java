@@ -9,6 +9,13 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import cn.edu.szu.szuschedule.object.Attachment;
+import cn.edu.szu.szuschedule.object.Homework;
+import cn.edu.szu.szuschedule.service.BBService;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+
+import java.util.List;
 
 import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
 
@@ -16,8 +23,21 @@ import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
  * Created by chenlin on 06/06/2017.
  */
 public class BlackBoardHomeworkInfoActivity extends AppCompatActivity {
+    public static Homework homework;
+    public static String linkTemplate = "<a href=\"%s\" target=\"_blank\">%s</a><br>";
+
     @Bind(R.id.attachmentList)
     TextView attachmentList;
+    @Bind(R.id.name)
+    TextView name;
+    @Bind(R.id.description)
+    TextView description;
+    @Bind(R.id.deadline)
+    TextView deadline;
+    @Bind(R.id.score)
+    TextView score;
+    @Bind(R.id.attachment)
+    TextView attachment;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -34,6 +54,38 @@ public class BlackBoardHomeworkInfoActivity extends AppCompatActivity {
             }
         });
 
-        attachmentList.setText(Html.fromHtml("<a href=\"/bbcswebdav/pid-516599-dt-content-rid-3765818_1/xid-3765818_1\" target=\"_blank\">实验1软件界面设计 模板 .doc</a>"));
+        name.setText(homework.getName());
+        description.setText(Html.fromHtml(homework.getDescription()));
+        deadline.setText("截止日期： " + homework.getDeadline());
+        if (homework.getScore() != -1) {
+            score.setVisibility(View.VISIBLE);
+            score.setText("得分: " + homework.getScore());
+        } else {
+            score.setVisibility(View.GONE);
+        }
+
+        BBService.getAttachments(this, homework)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<List<Attachment>>() {
+                    @Override
+                    public void accept(List<Attachment> attachments) throws Exception {
+                        if (attachments.size() == 0) {
+                            attachmentList.setVisibility(View.GONE);
+                            attachment.setVisibility(View.GONE);
+                            return ;
+                        }
+                        StringBuilder attachmentLink = new StringBuilder();
+                        for (Attachment attachment : attachments) {
+                            attachmentLink.append(String.format(linkTemplate, attachment.getUrl(), attachment.getName()));
+                        }
+                        attachmentList.setText(Html.fromHtml(attachmentLink.toString()));
+                    }
+                });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        ButterKnife.unbind(this);
     }
 }
