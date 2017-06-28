@@ -199,6 +199,20 @@ public class BBService {
     }
 
     /**
+     * 获取指定学期的课程
+     * @return
+     */
+    public static List<SubjectItem> getCoursesByTerm(List<SubjectItem> subjectItems, String termNum) {
+        List<SubjectItem> currentTerm = new ArrayList<>();
+        for (SubjectItem subjectItem : subjectItems) {
+            if (termNum.equals(subjectItem.getTermNum())) {
+                currentTerm.add(subjectItem);
+            }
+        }
+        return currentTerm;
+    }
+
+    /**
      * 更新科目列表
      * @param context
      * @return

@@ -20,14 +20,11 @@ import cn.edu.szu.szuschedule.fragment.SubjectListFragment;
 import cn.edu.szu.szuschedule.fragment.HomeworkListFragment;
 import cn.edu.szu.szuschedule.object.Homework;
 import cn.edu.szu.szuschedule.object.SubjectItem;
-import cn.edu.szu.szuschedule.object.User;
 import cn.edu.szu.szuschedule.service.BBService;
-import cn.edu.szu.szuschedule.service.UserService;
 import cn.edu.szu.szuschedule.util.LoadingUtil;
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
@@ -37,6 +34,8 @@ import static cn.edu.szu.szuschedule.util.DisplayUtil.setTranslucentStatus;
  * Created by jazzyzhong on 2017/6/3.
  */
 public class BlackBoardActivity extends AppCompatActivity implements HomeworkListFragment.OnCreateListener, HomeworkAdapter.OnClickListener {
+    private final static String currentTermNum = "20162";
+
     @Bind(R.id.viewPager)
     ViewPager viewPager;
     @Bind(R.id.tabLayout)
@@ -94,7 +93,7 @@ public class BlackBoardActivity extends AppCompatActivity implements HomeworkLis
                 .flatMap(new Function<ArrayList<SubjectItem>, ObservableSource<SubjectItem>>() {
                     @Override
                     public ObservableSource<SubjectItem> apply(ArrayList<SubjectItem> subjectItems) throws Exception {
-                        return Observable.fromIterable(subjectItems);
+                        return Observable.fromIterable(BBService.getCoursesByTerm(subjectItems, currentTermNum));
                     }
                 })
                 .flatMap(new Function<SubjectItem, ObservableSource<List<Homework>>>() {

@@ -24,11 +24,14 @@ import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Consumer;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by chenlin on 07/06/2017.
  */
 public class SubjectListFragment extends Fragment implements SubjectAdapter.OnClickListener {
+    private final static String currentTermNum = "20162";
+
     View view;
     RecyclerView subjectList;
     LoadingUtil loadingUtil;
@@ -82,7 +85,8 @@ public class SubjectListFragment extends Fragment implements SubjectAdapter.OnCl
                 .subscribe(new Consumer<ArrayList<SubjectItem>>() {
                     @Override
                     public void accept(@NonNull ArrayList<SubjectItem> subjectItems) throws Exception {
-                        subadpter = new SubjectAdapter(subjectItems);
+                        List<SubjectItem> currentTerm = BBService.getCoursesByTerm(subjectItems, currentTermNum);
+                        subadpter = new SubjectAdapter(currentTerm);
                         subadpter.setOnClickListener(SubjectListFragment.this);
                         subjectList.setAdapter(subadpter);
                         loadingUtil.hideLoading();
