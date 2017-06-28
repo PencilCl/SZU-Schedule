@@ -14,6 +14,7 @@ import android.widget.Toast;
 import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.adapter.TodoListAdapter;
 import cn.edu.szu.szuschedule.object.TodoItem;
+import cn.edu.szu.szuschedule.service.BBService;
 import cn.edu.szu.szuschedule.service.CurriculumScheduleService;
 import cn.edu.szu.szuschedule.service.LibraryService;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -56,7 +57,7 @@ public class ScheduleFragment extends Fragment implements CalendarView.OnDateCha
 
     @Override
     public void onSelectedDayChange(CalendarView view, int year, int month, int dayOfMonth) {
-        date = new Date(year, month, dayOfMonth);
+        date = new Date(year - 1900, month, dayOfMonth);
         getTodoList();
     }
 
@@ -78,6 +79,7 @@ public class ScheduleFragment extends Fragment implements CalendarView.OnDateCha
                     }
                 });
         todoItems.addAll(LibraryService.getTodoList(date));
+        todoItems.addAll(BBService.getTodoList(date));
         adapter.notifyDataSetChanged();
     }
 }

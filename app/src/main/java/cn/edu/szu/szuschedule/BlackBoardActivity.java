@@ -45,7 +45,7 @@ public class BlackBoardActivity extends AppCompatActivity implements HomeworkAda
 
         initViewPager();
         tabLayout.setupWithViewPager(viewPager);
-        tabLayout.getTabAt(0).setText(R.string.bb_homework_list);
+        tabLayout.getTabAt(0).setText(R.string.bb_unfinished_homework_list);
         tabLayout.getTabAt(1).setText(R.string.bb_subject_list);
     }
 

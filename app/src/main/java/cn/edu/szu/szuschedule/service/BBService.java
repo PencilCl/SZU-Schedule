@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 
+import cn.edu.szu.szuschedule.Constant;
 import cn.edu.szu.szuschedule.object.*;
 import cn.edu.szu.szuschedule.util.CommonUtil;
 import cn.edu.szu.szuschedule.util.SZUAuthenticationWebViewClient;
@@ -127,20 +128,7 @@ public class BBService {
 
                 // 从网络获取数据
                 if (subjectItems.size() == 0) {
-                    User user = UserService.getCurrentUser();
-                    loginBB(user.getAccount(), user.getPassword())
-                            .observeOn(Schedulers.io())
-                            .subscribe(new Consumer<String>() {
-                                @Override
-                                public void accept(String s) throws Exception {
-                                    refreshSubject();
-                                }
-                            }, new Consumer<Throwable>() {
-                                @Override
-                                public void accept(Throwable throwable) throws Exception {
-                                    throwable.printStackTrace();
-                                }
-                            });
+                    refreshSubject();
                 }
             }
         }).start();
@@ -150,8 +138,26 @@ public class BBService {
      * 刷新科目列表
      */
     public static void refreshSubject() {
-        getSubjectFromNetwork();
-        getAllHomeworkFromNetwork();
+        if (getttingSubjectItems) {
+            return ;
+        }
+        getttingSubjectItems = true;
+        User user = UserService.getCurrentUser();
+        loginBB(user.getAccount(), user.getPassword())
+                .observeOn(Schedulers.io())
+                .subscribe(new Consumer<String>() {
+                    @Override
+                    public void accept(String s) throws Exception {
+                        getSubjectFromNetwork();
+                        getAllHomeworkFromNetwork();
+                        getttingSubjectItems = false;
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        throwable.printStackTrace();
+                    }
+                });
     }
 
     /**
@@ -279,13 +285,18 @@ public class BBService {
                 }
                 String link = matcher.group(1).trim();
                 String info = matcher.group(2).trim();
+                String termNum = info.substring(0, 5);
+                // 过滤当前学期
+                if (!Constant.currentTerm.equals(termNum)) {
+                    continue;
+                }
                 String[] str = link.split("%3D");
                 SubjectItem course = new SubjectItem(
                         -1,
                         info.substring(info.indexOf(":") + 2),
                         str[str.length-1].split("%26")[0],
                         info.substring(6, info.indexOf(":")),
-                        info.substring(0, 5));
+                        termNum);
                 saveSubjectToDataBase(course, db);
                 subjectItems.add(course);
                 dispatcherSubjectItemsChanged();
@@ -539,7 +550,23 @@ public class BBService {
      */
     public static List<TodoItem> getTodoList(Date date) {
         List<TodoItem> todoItems = new ArrayList<>();
-        // TODO: 28/06/2017
+        String deadline;
+        Pattern timeReg = Pattern.compile("([0-9]+)年([0-9]+)月([0-9]+)日 (.)午([0-9]+)时([0-9]+)分");
+        String timeTemplate = "%02d:%02d";
+        for (Homework homework : mHomeworkList) {
+            deadline = homework.getDeadline();
+            Matcher matcher = timeReg.matcher(deadline);
+            if (matcher.find() &&
+                    Integer.valueOf(matcher.group(1)) == date.getYear() + 1900 &&
+                    Integer.valueOf(matcher.group(2)) == date.getMonth() + 1 &&
+                    Integer.valueOf(matcher.group(3)) == date.getDate()) {
+                todoItems.add(new TodoItem("交作业 " + homework.getName(),
+                        homework.getSubjectItem().getSubjectName(),
+                        "00:00",
+                        String.format(timeTemplate, ("下".equals(matcher.group(4)) ? 12 : 0) + Integer.valueOf(matcher.group(5)), Integer.valueOf(matcher.group(6)))
+                ));
+            }
+        }
         return todoItems;
     }
 

@@ -41,6 +41,8 @@ public class LibraryService {
             "<TD width=\"35%\"><[\\s\\S]*?>([\\s\\S]*?)[／/][\\s\\S]*?</a>" +
             "[\\s\\S]*?<TD width=\"10%\">(.*?)</TD>";
 
+    private static boolean refreshing = false;
+
     private static WebView webView;
     private static Application mApplication;
     private static List<OnDataChangedListener> onDataChangedListeners = new ArrayList<>();
@@ -108,20 +110,7 @@ public class LibraryService {
                 getLocalDatabaseData();
 
                 if (bookItems.size() == 0) {
-                    User user = UserService.getCurrentUser();
-                    loginLibrary(user.getAccount(), user.getPassword())
-                            .observeOn(Schedulers.io())
-                            .subscribe(new Consumer<String>() {
-                                @Override
-                                public void accept(String s) throws Exception {
-                                    getDataFromNetwork();
-                                }
-                            }, new Consumer<Throwable>() {
-                                @Override
-                                public void accept(Throwable throwable) throws Exception {
-                                    throwable.printStackTrace();
-                                }
-                            });
+                    refresh();
                 }
             }
         }).start();
@@ -131,7 +120,25 @@ public class LibraryService {
      * 刷新图书信息
      */
     public static void refresh() {
-        getDataFromNetwork();
+        if (refreshing) {
+            return ;
+        }
+        refreshing = true;
+        User user = UserService.getCurrentUser();
+        loginLibrary(user.getAccount(), user.getPassword())
+                .observeOn(Schedulers.io())
+                .subscribe(new Consumer<String>() {
+                    @Override
+                    public void accept(String s) throws Exception {
+                        getDataFromNetwork();
+                        refreshing = false;
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        throwable.printStackTrace();
+                    }
+                });
     }
 
     /**

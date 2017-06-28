@@ -16,6 +16,7 @@ import cn.edu.szu.szuschedule.object.Homework;
 import cn.edu.szu.szuschedule.object.SubjectItem;
 import cn.edu.szu.szuschedule.service.BBService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,8 +25,8 @@ import java.util.List;
 public class HomeworkListFragment extends Fragment implements BBService.OnDataChangedListener, HomeworkAdapter.OnClickListener {
     View view;
     RecyclerView recyclerView;
-    List<Homework> homework;
-    HomeworkAdapter adapter;
+    List<Homework> mHomework = new ArrayList<>();
+    HomeworkAdapter adapter = new HomeworkAdapter(mHomework);
 
     @Nullable
     @Override
@@ -35,6 +36,8 @@ public class HomeworkListFragment extends Fragment implements BBService.OnDataCh
         LinearLayoutManager sub_list_layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(sub_list_layoutManager);
         BBService.addOnDataChangedListener(this);
+        adapter.setOnClickListener(this);
+        recyclerView.setAdapter(adapter);
 
         return view;
     }
@@ -46,11 +49,15 @@ public class HomeworkListFragment extends Fragment implements BBService.OnDataCh
 
     @Override
     public void onHomeworkChanged(List<Homework> homeworkList) {
-        if (homework == null) {
-            homework = homeworkList;
-            adapter = new HomeworkAdapter(homeworkList);
-            adapter.setOnClickListener(this);
-            recyclerView.setAdapter(adapter);
+        for (Homework homework : mHomework) {
+            if (!homeworkList.contains(homework)) {
+                mHomework.remove(homework);
+            }
+        }
+        for (Homework homework : homeworkList) {
+            if (!homework.isFinished() && !mHomework.contains(homework)) {
+                mHomework.add(homework);
+            }
         }
         getActivity().runOnUiThread(new Runnable() {
             @Override
