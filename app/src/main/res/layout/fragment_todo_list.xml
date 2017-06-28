@@ -20,7 +20,9 @@
                                 android:id="@+id/calendarView"
                                 android:layout_marginBottom="20dp"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content" android:background="@android:color/white"/>
+                                android:layout_height="wrap_content" android:background="@android:color/white"
+                                android:focusedMonthDateColor="@color/colorPrimary"
+                        android:selectedDateVerticalBar="@color/colorPrimary"/>
                 </android.support.design.widget.CollapsingToolbarLayout>
         </android.support.design.widget.AppBarLayout>
 

@@ -18,6 +18,9 @@ import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.UserTellUsActivity;
 
 import android.widget.Button;
+import cn.edu.szu.szuschedule.service.BBService;
+import cn.edu.szu.szuschedule.service.CurriculumScheduleService;
+import cn.edu.szu.szuschedule.service.LibraryService;
 import cn.edu.szu.szuschedule.util.LoadingUtil;
 import com.lzy.okgo.OkGo;
 import okhttp3.Call;
@@ -41,6 +44,7 @@ public class UserFragment extends Fragment{
             public void onClick(View view) {
                 clearWebViewCache();
                 clearSharedPreferences();
+                clearCurrentData();
                 getActivity().startActivity(new Intent(getActivity(),LoginActivity.class));
                 getActivity().finish();
             }
@@ -53,6 +57,15 @@ public class UserFragment extends Fragment{
             }
         });
         return view;
+    }
+
+    /**
+     * 清除各类现有的数据
+     */
+    private void clearCurrentData() {
+        BBService.clearCurrentData();
+        LibraryService.clearCurrentData();
+        CurriculumScheduleService.clearCurrentData();
     }
 
     /**

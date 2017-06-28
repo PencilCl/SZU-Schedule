@@ -2,7 +2,7 @@
 <resources>
     <color name="colorPrimary">#5677fc</color>
     <color name="colorPrimaryDark">#3F51B5</color>
-    <color name="colorAccent">#FFF</color>
+    <color name="colorAccent">#5677fc</color>
 
     <color name="indianRed1">#e84e40</color>
     <color name="honeydew">#9ccc65</color>

@@ -18,8 +18,10 @@ import cn.edu.szu.szuschedule.object.TodoItem;
 import cn.edu.szu.szuschedule.service.BBService;
 import cn.edu.szu.szuschedule.service.CurriculumScheduleService;
 import cn.edu.szu.szuschedule.service.LibraryService;
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
+import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
 
 import java.util.ArrayList;
@@ -51,9 +53,8 @@ public class ScheduleFragment extends Fragment implements CalendarView.OnDateCha
         todoList.setAdapter(adapter);
 
         date = new Date();
+        date.setDate(date.getDate() + 1);
         getTodoList();
-
-//        todoList.setAdapter(new TodoListAdapter(todoItems));
 
         return view;
     }
@@ -66,30 +67,19 @@ public class ScheduleFragment extends Fragment implements CalendarView.OnDateCha
 
     private void getTodoList() {
         todoItems.clear();
-        //todoItems.addAll(BBService.getTodoList(date));
-        CurriculumScheduleService.getTodoList(getActivity(),date)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<ArrayList<TodoItem>>() {
-                    @Override
-                    public void accept(@NonNull ArrayList<TodoItem> TodoItems) throws Exception {
-                        todoItems.addAll(TodoItems);
-                        adapter.notifyDataSetChanged();
-                    }
-                }, new Consumer<Throwable>() {
+        Observable.zip(CurriculumScheduleService.getTodoList(getActivity(), date), LibraryService.getTodoList(getActivity(), date), new BiFunction<ArrayList<TodoItem>, ArrayList<TodoItem>, ArrayList<TodoItem>>() {
             @Override
-            public void accept(Throwable throwable) throws Exception {
-                throwable.printStackTrace();
-                Toast.makeText(getActivity(), throwable.getMessage(), Toast.LENGTH_SHORT).show();
+            public ArrayList<TodoItem> apply(ArrayList<TodoItem> todoItems1, ArrayList<TodoItem> todoItems2) throws Exception {
+                todoItems.addAll(todoItems1);
+                todoItems.addAll(todoItems2);
+                return todoItems;
             }
-        });
-        LibraryService.getTodoList(getActivity(),date)
+        })
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<ArrayList<TodoItem>>() {
                     @Override
-                    public void accept(@NonNull ArrayList<TodoItem> TodoItems) throws Exception {
-                        todoItems.addAll(TodoItems);
+                    public void accept(ArrayList<TodoItem> todoItems) throws Exception {
                         adapter.notifyDataSetChanged();
-
                     }
                 }, new Consumer<Throwable>() {
                     @Override
@@ -98,7 +88,5 @@ public class ScheduleFragment extends Fragment implements CalendarView.OnDateCha
                         Toast.makeText(getActivity(), throwable.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
-
-
     }
 }

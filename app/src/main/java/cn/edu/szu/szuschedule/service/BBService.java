@@ -66,6 +66,15 @@ public class BBService {
     }
 
     /**
+     * 清除现有数据对象
+     */
+    public static void clearCurrentData() {
+        subjectItems = null;
+        subjectItemListHashMap.clear();
+        homeworkListHashMap.clear();
+    }
+
+    /**
      * 获取指定日期需要完成的作业
      * @param date
      * @return
@@ -75,7 +84,6 @@ public class BBService {
         // TODO: 28/06/2017
         return todoItems;
     }
-
 
     /**
      * 初始化BBService
