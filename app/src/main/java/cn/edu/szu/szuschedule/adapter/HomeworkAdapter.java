@@ -64,6 +64,9 @@ public class HomeworkAdapter extends RecyclerView.Adapter implements View.OnClic
     public void onClick(View v) {
         if (this.onClickListener != null) {
             int position = mRecyclerView.getChildAdapterPosition(v);
+            if (position == -1) {
+                return ;
+            }
             this.onClickListener.onClick(position, v, homeworkItems.get(position));
         }
     }

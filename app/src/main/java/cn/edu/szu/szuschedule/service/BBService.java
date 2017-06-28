@@ -397,7 +397,7 @@ public class BBService {
                         Pattern attachmentPattern = Pattern.compile("<a href=\"([\\w\\W]*?)\" target=\"_blank\">[\\w\\W]*?&nbsp;([\\w\\W]*?)</a>");
                         Matcher attachmentMatcher = attachmentPattern.matcher(singleHomeworkMatcher.group(3));
                         while (attachmentMatcher.find()) {
-                            attachments.add(new Attachment(-1, attachmentMatcher.group(2), attachmentMatcher.group(1)));
+                            attachments.add(new Attachment(-1, attachmentMatcher.group(2), baseUrl + attachmentMatcher.group(1)));
                         }
                     }
 

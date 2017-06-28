@@ -4,7 +4,9 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.view.View;
+import android.webkit.CookieManager;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import butterknife.Bind;
@@ -71,10 +73,15 @@ public class BlackBoardHomeworkInfoActivity extends AppCompatActivity {
             return ;
         }
         StringBuilder attachmentLink = new StringBuilder();
+//        String cookie = CookieManager.getInstance().getCookie("http://elearning.szu.edu.cn");
+//        cookie = cookie.replaceAll("BIGipServerBlackboard=[0-9.; ]+", "");
+//        System.out.println(cookie);
         for (Attachment attachment : attachments) {
+//            System.out.println(attachment.getUrl());
             attachmentLink.append(String.format(linkTemplate, attachment.getUrl(), attachment.getName()));
         }
         attachmentList.setText(Html.fromHtml(attachmentLink.toString()));
+        attachmentList.setMovementMethod(LinkMovementMethod.getInstance()); // 设置跳转链接
     }
 
     @Override

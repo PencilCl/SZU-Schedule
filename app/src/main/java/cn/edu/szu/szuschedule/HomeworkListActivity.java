@@ -74,7 +74,12 @@ public class HomeworkListActivity extends AppCompatActivity implements HomeworkA
                 mHomework.add(homework);
             }
         }
-        homeworkAdapter.notifyDataSetChanged();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                homeworkAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     @Override
