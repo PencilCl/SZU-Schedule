@@ -16,15 +16,12 @@ import cn.edu.szu.szuschedule.HomeworkListActivity;
 import cn.edu.szu.szuschedule.R;
 import cn.edu.szu.szuschedule.adapter.SubjectAdapter;
 import cn.edu.szu.szuschedule.object.SubjectItem;
-import cn.edu.szu.szuschedule.object.User;
 import cn.edu.szu.szuschedule.service.BBService;
-import cn.edu.szu.szuschedule.service.UserService;
 import cn.edu.szu.szuschedule.util.LoadingUtil;
-import io.reactivex.ObservableSource;
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
 
 import java.util.ArrayList;
 
@@ -34,7 +31,6 @@ import java.util.ArrayList;
 public class SubjectListFragment extends Fragment implements SubjectAdapter.OnClickListener {
     View view;
     RecyclerView subjectList;
-    ArrayList<SubjectItem> subjectItems;
     LoadingUtil loadingUtil;
     SwipeRefreshLayout course_Refresh;
     SubjectAdapter subadpter;
@@ -61,7 +57,6 @@ public class SubjectListFragment extends Fragment implements SubjectAdapter.OnCl
         course_Refresh.setColorSchemeColors(getResources().getColor(android.R.color.holo_blue_bright),
                 getResources().getColor(android.R.color.holo_orange_light),
                 getResources().getColor(android.R.color.holo_green_light));
-        subjectItems = new ArrayList<>();
         loadingUtil = new LoadingUtil(getActivity());
         getCourses(0);
 
@@ -75,33 +70,27 @@ public class SubjectListFragment extends Fragment implements SubjectAdapter.OnCl
     }
 
     public  void getCourses(final int i) {
-       // loadingUtil.showLoading();
-        User user = UserService.getCurrentUser();
-        BBService.loginBB(user.getAccount(), user.getPassword())
-                .flatMap(new Function<String, ObservableSource<ArrayList<SubjectItem>>>() {
-                    @Override
-                    public ObservableSource<ArrayList<SubjectItem>> apply(String s) throws Exception {
-                        if(i == 0)
-                            return BBService.getAllCourses(getActivity());
-                        else
-                            return BBService.updateAllCourses(getActivity());
-                    }
-                })
-                .observeOn(AndroidSchedulers.mainThread())
+        loadingUtil.showLoading();
+        Observable<ArrayList<SubjectItem>> observable;
+        if (i == 0) {
+            observable = BBService.getAllCourses(getActivity());
+        } else {
+            observable = BBService.updateAllCourses(getActivity());
+        }
+
+        observable.observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<ArrayList<SubjectItem>>() {
                     @Override
-                    public void accept(@NonNull ArrayList<SubjectItem> SubjectItems) throws Exception {
-                        subjectItems = SubjectItems;
+                    public void accept(@NonNull ArrayList<SubjectItem> subjectItems) throws Exception {
                         subadpter = new SubjectAdapter(subjectItems);
                         subadpter.setOnClickListener(SubjectListFragment.this);
                         subjectList.setAdapter(subadpter);
-                        //loadingUtil.hideLoading();
+                        loadingUtil.hideLoading();
                     }
                 }, new Consumer<Throwable>() {
                     @Override
                     public void accept(@NonNull Throwable throwable) throws Exception {
-                        throwable.printStackTrace();
-                       //  loadingUtil.hideLoading();
+                        loadingUtil.hideLoading();
                         Toast.makeText(getActivity(), throwable.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });

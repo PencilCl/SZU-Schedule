@@ -199,7 +199,8 @@ public class LibraryService {
                 }, new Consumer<Throwable>() {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
-                        e.onError(throwable);
+                        e.onNext(bookItems);
+//                        e.onError(throwable);
                     }
                 });
     }

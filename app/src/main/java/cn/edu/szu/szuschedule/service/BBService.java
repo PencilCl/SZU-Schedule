@@ -8,10 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 
-import cn.edu.szu.szuschedule.object.Attachment;
-import cn.edu.szu.szuschedule.object.Homework;
-import cn.edu.szu.szuschedule.object.SubjectItem;
-import cn.edu.szu.szuschedule.object.TodoItem;
+import cn.edu.szu.szuschedule.object.*;
 import cn.edu.szu.szuschedule.util.CommonUtil;
 import cn.edu.szu.szuschedule.util.SZUAuthenticationWebViewClient;
 import com.lzy.okgo.OkGo;
@@ -29,7 +26,9 @@ import com.lzy.okrx2.adapter.ObservableBody;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.Response;
@@ -190,15 +189,11 @@ public class BBService {
                 getSubjectFromLocalDatabase(context);
                 // 如果本地数据为空，则从网络中获取
                 if (subjectItems.size() == 0) {
-                    String error = getSubjectFromNetwork(context);
-                    if (error == null) {
-                        e.onNext(subjectItems);
-                    } else {
-                        e.onError(new Throwable(error));
-                    }
-                } else {
-                    e.onNext(subjectItems);
+                    System.out.println("size == 0");
+                    getSubjectFromNetwork(context, e);
+                    return ;
                 }
+                e.onNext(subjectItems);
             }
         }).subscribeOn(Schedulers.io());
     }
@@ -215,14 +210,8 @@ public class BBService {
                 if(subjectItems  == null){
                     subjectItems = new ArrayList<>();
                 }
-                String error = getSubjectFromNetwork(context);
-                if (error == null) {
-                    e.onNext(subjectItems);
-                } else {
-                    e.onError(new Throwable(error));
-                }
-                }
-
+                getSubjectFromNetwork(context, e);
+            }
         }).subscribeOn(Schedulers.io());
     }
 
@@ -257,52 +246,58 @@ public class BBService {
      * @param context
      * @return
      */
-    private  static String getSubjectFromNetwork(Context context){
-        try{
-            okhttp3.Response response = OkGo.post(courseUrl)
-                    .headers("Cookie",CookieManager.getInstance().getCookie(baseUrl))
-                    .params("action","refreshAjaxModule")
-                    .params("modId","_25_1")
-                    .params("tabId","_2_1")
-                    .params("tab_tab_group_id","_2_1")
-                    .execute();
-            String html = response.body().string();
-            Pattern pattern = Pattern.compile("<a href=\"(.*?)\".*>(.*?)</a>");
-            Matcher matcher = pattern.matcher(html);
-            SQLiteDatabase db = DBHelper.getDB(context);
-            //清空原有数据
-            db.execSQL("DELETE FROM subject");
-            subjectItems.clear();
-            while(matcher.find()){
-                String link = matcher.group(1).trim();
-                String info = matcher.group(2).trim();
-                String courseName = info.substring(info.indexOf(":") + 2);
-                String termNum = info.substring(0, 5);
-                String courseNum = info.substring(6, info.indexOf(":"));
-                String[] str = link.split("%3D");
-                String courseId = str[str.length-1].split("%26")[0];
-                SubjectItem course = new SubjectItem(-1,courseName,courseId,courseNum,termNum);
-                ContentValues cv = new ContentValues();
-                cv.put("subjectName",courseName);
-                cv.put("courseNum",courseNum);
-                cv.put("termNum",termNum);
-                cv.put("courseId",courseId);
-                db.insert("subject",null,cv);
-                // 获取最后插入的记录id
-                Cursor cursor = db.rawQuery("select last_insert_rowid() from subject", null);
-                int lastId = 0;
-                if(cursor.moveToFirst()) lastId = cursor.getInt(0);
-                cursor.close();
-                course.setId(lastId);
-                subjectItems.add(course);
-            }
-            db.close();
-            return null;
-
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        return "发生未知错误";
+    private  static void getSubjectFromNetwork(final Context context, final ObservableEmitter<ArrayList<SubjectItem>> e){
+        User user = UserService.getCurrentUser();
+        loginBB(user.getAccount(), user.getPassword())
+                .subscribe(new Consumer<String>() {
+                    @Override
+                    public void accept(String s) throws Exception {
+                        okhttp3.Response response = OkGo.post(courseUrl)
+                                .headers("Cookie",CookieManager.getInstance().getCookie(baseUrl))
+                                .params("action","refreshAjaxModule")
+                                .params("modId","_25_1")
+                                .params("tabId","_2_1")
+                                .params("tab_tab_group_id","_2_1")
+                                .execute();
+                        String html = response.body().string();
+                        Pattern pattern = Pattern.compile("<a href=\"(.*?)\".*>(.*?)</a>");
+                        Matcher matcher = pattern.matcher(html);
+                        SQLiteDatabase db = DBHelper.getDB(context);
+                        //清空原有数据
+                        db.execSQL("DELETE FROM subject");
+                        subjectItems.clear();
+                        while(matcher.find()){
+                            String link = matcher.group(1).trim();
+                            String info = matcher.group(2).trim();
+                            String courseName = info.substring(info.indexOf(":") + 2);
+                            String termNum = info.substring(0, 5);
+                            String courseNum = info.substring(6, info.indexOf(":"));
+                            String[] str = link.split("%3D");
+                            String courseId = str[str.length-1].split("%26")[0];
+                            SubjectItem course = new SubjectItem(-1,courseName,courseId,courseNum,termNum);
+                            ContentValues cv = new ContentValues();
+                            cv.put("subjectName",courseName);
+                            cv.put("courseNum",courseNum);
+                            cv.put("termNum",termNum);
+                            cv.put("courseId",courseId);
+                            db.insert("subject",null,cv);
+                            // 获取最后插入的记录id
+                            Cursor cursor = db.rawQuery("select last_insert_rowid() from subject", null);
+                            int lastId = 0;
+                            if(cursor.moveToFirst()) lastId = cursor.getInt(0);
+                            cursor.close();
+                            course.setId(lastId);
+                            subjectItems.add(course);
+                        }
+                        db.close();
+                        e.onNext(subjectItems);
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        e.onNext(subjectItems);
+                    }
+                });
     }
 
     /**
@@ -328,7 +323,7 @@ public class BBService {
                 // 从网络获取数据
                 homeworkList = getHomeworkFromNetwork(context, subjectItem);
                 if (homeworkList == null) {
-                    e.onError(new Throwable("获取作业信息失败"));
+//                    e.onError(new Throwable("获取作业信息失败"));
                 } else {
                     subjectItemListHashMap.put(subjectItem, homeworkList);
                     e.onNext(homeworkList);
@@ -471,7 +466,7 @@ public class BBService {
             db.close();
             return homeworkList;
         } catch (Exception e) {
-            e.printStackTrace();
+
         }
         return null;
     }

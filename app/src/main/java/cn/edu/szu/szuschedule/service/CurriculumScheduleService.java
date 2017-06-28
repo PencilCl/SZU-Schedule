@@ -171,9 +171,7 @@ public class CurriculumScheduleService {
             }
 
             return null;
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -195,7 +193,7 @@ public class CurriculumScheduleService {
         cv.put("end", course.getEnd());
         db.insert("lesson", null, cv);
         // 获取最后插入的记录id
-        Cursor cursor = db.rawQuery("select last_insert_rowid() from library", null);
+        Cursor cursor = db.rawQuery("select last_insert_rowid() from lesson", null);
         int lastId = 0;
         if (cursor.moveToFirst()) lastId = cursor.getInt(0);
         cursor.close();
