@@ -548,6 +548,9 @@ public class BBService {
         Pattern timeReg = Pattern.compile("([0-9]+)年([0-9]+)月([0-9]+)日 (.)午([0-9]+)时([0-9]+)分");
         String timeTemplate = "%02d:%02d";
         for (Homework homework : mHomeworkList) {
+            if (homework.isFinished()) {
+                continue;
+            }
             deadline = homework.getDeadline();
             Matcher matcher = timeReg.matcher(deadline);
             if (matcher.find() &&
