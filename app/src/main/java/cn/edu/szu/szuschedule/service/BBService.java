@@ -149,7 +149,7 @@ public class BBService {
                     @Override
                     public void accept(String s) throws Exception {
                         getSubjectFromNetwork();
-                        getAllHomeworkFromNetwork();
+//                        getAllHomeworkFromNetwork();
                         getttingSubjectItems = false;
                     }
                 }, new Consumer<Throwable>() {
@@ -277,12 +277,8 @@ public class BBService {
             Matcher matcher = pattern.matcher(html);
             SQLiteDatabase db = DBHelper.getDB(mApplication);
             // 清空原有数据
-            boolean flag = true;
+            clearDatabase(db);
             while(matcher.find()){
-                if (flag) {
-                    clearDatabase(db);
-                    flag = false;
-                }
                 String link = matcher.group(1).trim();
                 String info = matcher.group(2).trim();
                 String termNum = info.substring(0, 5);
@@ -300,6 +296,7 @@ public class BBService {
                 saveSubjectToDataBase(course, db);
                 subjectItems.add(course);
                 dispatcherSubjectItemsChanged();
+                new GetHomeworkFromNetwork(course).start(); // 获取作业列表
             }
             db.close();
         } catch (Exception e) {
@@ -312,8 +309,8 @@ public class BBService {
      * @param db
      */
     private static void clearDatabase(SQLiteDatabase db) {
-        clearHomeworkData(db);
         for (SubjectItem subjectItem : subjectItems) {
+            clearHomeworkData(db, subjectItem);
             db.delete("subject", "id=?", new String[] {String.valueOf(subjectItem)});
         }
         db.execSQL("DELETE FROM blackboard WHERE studentID = ?", new String[] {String.valueOf(UserService.getCurrentUser().getId())});
@@ -351,129 +348,30 @@ public class BBService {
      * 并保存到数据库中
      */
     private static void getAllHomeworkFromNetwork() {
-        String cookie = CookieManager.getInstance().getCookie(baseUrl);
-        boolean flag = true;
-        for (SubjectItem subjectItem : subjectItems) {
-            try {
-                List<Homework> homeworkList = new ArrayList<>();
-                String html = OkGo.<String>get(String.format("http://elearning.szu.edu.cn/webapps/blackboard/execute/modulepage/view?course_id=%s&mode=view", subjectItem.getCourseId()))
-                        .headers("Cookie", cookie)
-                        .execute().body().string();
-                Pattern pattern = Pattern.compile("<a href=\"(.*?)\" target=\"_self\"><span title=\"网上作业\">网上作业</span></a>");
-                Matcher matcher = pattern.matcher(html);
-                if (!matcher.find()) {
-                    // 找不到网上作业的地址，说明该课程没有作业。直接跳过
-                    continue;
-                }
-                String homeworkUrl = matcher.group(1);
-                html = OkGo.<String>get(homeworkUrl)
-                        .headers("Cookie", cookie)
-                        .execute().body().string();
-                pattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?(<ul class=\"attachments clearfix\">([\\w\\W]*?)</ul>)?[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
-                matcher = pattern.matcher(html);
-                SQLiteDatabase db = DBHelper.getDB(mApplication);
-                while (matcher.find()) {
-                    if (flag) {
-                        clearHomeworkData(db);
-                        flag = false;
-                    }
-                    List<Attachment> attachments = new ArrayList<>();
-                    String singleHomeworkHtml = matcher.group(0);
-                    Pattern singleHomeworkPattern;
-                    boolean hasAttachment = singleHomeworkHtml.contains("<th scope=\"row\">已附加文件:</th>");
-                    if (hasAttachment) {
-                        singleHomeworkPattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?<ul class=\"attachments clearfix\">([\\w\\W]*?)</ul>[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
-                    } else {
-                        singleHomeworkPattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
-                    }
-
-                    Matcher singleHomeworkMatcher = singleHomeworkPattern.matcher(singleHomeworkHtml);
-                    if (!singleHomeworkMatcher.find()) {
-                        System.out.println("not found");
-                        continue;
-                    }
-
-                    if (hasAttachment) {
-                        Pattern attachmentPattern = Pattern.compile("<a href=\"([\\w\\W]*?)\" target=\"_blank\">[\\w\\W]*?&nbsp;([\\w\\W]*?)</a>");
-                        Matcher attachmentMatcher = attachmentPattern.matcher(singleHomeworkMatcher.group(3));
-                        while (attachmentMatcher.find()) {
-                            attachments.add(new Attachment(-1, attachmentMatcher.group(2), baseUrl + attachmentMatcher.group(1)));
-                        }
-                    }
-
-                    Homework homework = new Homework(-1,
-                            singleHomeworkMatcher.group(2),
-                            singleHomeworkMatcher.group(hasAttachment ? 4 : 3).replaceAll("</div>", "\n").replaceAll("<div>", "").trim(),
-                            -1, "无", 0, subjectItem);
-                    getHomeworkOtherInfo(singleHomeworkMatcher.group(1), cookie, homework);
-                    saveHomeworkToDatabase(db, homework, subjectItem, attachments);
-                    homeworkListHashMap.put(homework, attachments);
-                    mHomeworkList.add(homework);
-                    homeworkList.add(homework);
-                    dispatcherHomeworkChanged();
-                }
-                subjectItemListHashMap.put(subjectItem, homeworkList);
-                db.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private static void getHomeworkOtherInfo(String url, String cookie, Homework homework) throws IOException {
-        String html = OkGo.<String>get(baseUrl + url)
-                .headers("Cookie", cookie)
-                .execute().body().string();
-        String deadline = null;
-        Pattern deadlinePattern = Pattern.compile("id=\"dueDate\" value=\"(.*?)\"");
-        Matcher deadlineMatcher = deadlinePattern.matcher(html);
-        if (deadlineMatcher.find()) {
-            deadline = deadlineMatcher.group(1);
-            if (!"&nbsp;".equals(deadline)) {
-                homework.setDeadline(deadline);
-            }
-        }
-        int index = html.indexOf("/webapps/blackboard/execute/attemptExpandListItemGenerator?attempt_id=");
-        if (index == -1) {
-            index = html.indexOf("/webapps/blackboard/execute/groupAttemptExpandListItemGenerator?groupAttempt_id=");
-        }
-        if (index != -1) {
-            homework.setFinished(1); // 标记作业已完成
-            String scoreUrl = html.substring(index, html.indexOf("\"", index));
-            String scoreHtml = OkGo.<String>post(baseUrl + scoreUrl)
-                    .headers("Cookie", cookie)
-                    .params("course_id", homework.getSubjectItem().getCourseId())
-                    .params("filterAttemptHref", "%2Fwebapps%2Fblackboard%2Fexecute%2FgradeAttempt")
-                    .execute().body().string();
-            Pattern scorePattern = Pattern.compile("成绩 :.*?([0-9]+).*");
-            Matcher scoreMatcher = scorePattern.matcher(scoreHtml);
-            if (scoreMatcher.find()) {
-                homework.setScore(Integer.valueOf(scoreMatcher.group(1).trim()));
-            }
+        for (final SubjectItem subjectItem : subjectItems) {
+            new GetHomeworkFromNetwork(subjectItem).start();
         }
     }
 
     /**
-     * 清除当前用户的所有作业信息
+     * 清除当前用户指定课程的作业信息
      * @param db
      */
-    private static void clearHomeworkData(SQLiteDatabase db) {
+    private static void clearHomeworkData(SQLiteDatabase db, SubjectItem subjectItem) {
         homeworkListHashMap.clear();
         mHomeworkList.clear();
         dispatcherHomeworkChanged();
-        for (SubjectItem subjectItem : subjectItems) {
-            subjectItemListHashMap.put(subjectItem, new ArrayList<Homework>());
-            Cursor cursor = db.rawQuery("SELECT homework.id FROM subjectHomeworkMap INNER JOIN homework ON subjectHomeworkMap.subjectID = ? AND subjectHomeworkMap.homeworkID = homework.id", new String[] {String.valueOf(subjectItem.getId())});
-            while (cursor.moveToNext()) {
-                String homeworkID = cursor.getString(0);
-                Cursor cursor2 = db.rawQuery("SELECT attachment.id FROM homeworkAttachmentMap INNER JOIN attachment ON homeworkAttachmentMap.homeworkID = ? AND homeworkAttachmentMap.attachmentID = attachment.id", new String[] {homeworkID});
-                while (cursor2.moveToNext()) {
-                    db.delete("attachment", "id=?", new String[] {cursor2.getString(0)});
-                    db.delete("homeworkAttachmentMap", "attachmentID=?", new String[] {cursor2.getString(0)});
-                }
-                db.delete("homework", "id=?", new String[] {homeworkID});
-                db.delete("subjectHomeworkMap", "homeworkID=?", new String[] {homeworkID});
+        subjectItemListHashMap.put(subjectItem, new ArrayList<Homework>());
+        Cursor cursor = db.rawQuery("SELECT homework.id FROM subjectHomeworkMap INNER JOIN homework ON subjectHomeworkMap.subjectID = ? AND subjectHomeworkMap.homeworkID = homework.id", new String[] {String.valueOf(subjectItem.getId())});
+        while (cursor.moveToNext()) {
+            String homeworkID = cursor.getString(0);
+            Cursor cursor2 = db.rawQuery("SELECT attachment.id FROM homeworkAttachmentMap INNER JOIN attachment ON homeworkAttachmentMap.homeworkID = ? AND homeworkAttachmentMap.attachmentID = attachment.id", new String[] {homeworkID});
+            while (cursor2.moveToNext()) {
+                db.delete("attachment", "id=?", new String[] {cursor2.getString(0)});
+                db.delete("homeworkAttachmentMap", "attachmentID=?", new String[] {cursor2.getString(0)});
             }
+            db.delete("homework", "id=?", new String[] {homeworkID});
+            db.delete("subjectHomeworkMap", "homeworkID=?", new String[] {homeworkID});
         }
     }
 
@@ -614,6 +512,112 @@ public class BBService {
             }
         }
         return currentTerm;
+    }
+
+    static class GetHomeworkFromNetwork extends Thread {
+        private SubjectItem subjectItem;
+        public GetHomeworkFromNetwork(SubjectItem subjectItem) {
+            this.subjectItem = subjectItem;
+        }
+
+        @Override
+        public void run() {
+            String cookie = CookieManager.getInstance().getCookie(baseUrl);
+
+            try {
+                List<Homework> homeworkList = new ArrayList<>();
+                String html = OkGo.<String>get(String.format("http://elearning.szu.edu.cn/webapps/blackboard/execute/modulepage/view?course_id=%s&mode=view", subjectItem.getCourseId()))
+                        .headers("Cookie", cookie)
+                        .execute().body().string();
+                Pattern pattern = Pattern.compile("<a href=\"(.*?)\" target=\"_self\"><span title=\"网上作业\">网上作业</span></a>");
+                Matcher matcher = pattern.matcher(html);
+                if (!matcher.find()) {
+                    // 找不到网上作业的地址，说明该课程没有作业。直接跳过
+                    return ;
+                }
+                String homeworkUrl = matcher.group(1);
+                html = OkGo.<String>get(homeworkUrl)
+                        .headers("Cookie", cookie)
+                        .execute().body().string();
+                pattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?(<ul class=\"attachments clearfix\">([\\w\\W]*?)</ul>)?[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
+                matcher = pattern.matcher(html);
+                SQLiteDatabase db = DBHelper.getDB(mApplication);
+                clearHomeworkData(db, subjectItem);
+                while (matcher.find()) {
+                    List<Attachment> attachments = new ArrayList<>();
+                    String singleHomeworkHtml = matcher.group(0);
+                    Pattern singleHomeworkPattern;
+                    boolean hasAttachment = singleHomeworkHtml.contains("<th scope=\"row\">已附加文件:</th>");
+                    if (hasAttachment) {
+                        singleHomeworkPattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?<ul class=\"attachments clearfix\">([\\w\\W]*?)</ul>[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
+                    } else {
+                        singleHomeworkPattern = Pattern.compile("<li[\\w\\W]*?id=\"contentListItem[\\w\\W]*?>[\\w\\W]*?<a href=\"([\\w\\W]*?)\"><span style=\"color:#000000;\">([\\w\\W]*?)</span>[\\w\\W]*?<div class=\"vtbegenerated\">([\\w\\W]*?)<div id=\"[\\w\\W]*?</li>");
+                    }
+
+                    Matcher singleHomeworkMatcher = singleHomeworkPattern.matcher(singleHomeworkHtml);
+                    if (!singleHomeworkMatcher.find()) {
+                        System.out.println("not found");
+                        continue;
+                    }
+
+                    if (hasAttachment) {
+                        Pattern attachmentPattern = Pattern.compile("<a href=\"([\\w\\W]*?)\" target=\"_blank\">[\\w\\W]*?&nbsp;([\\w\\W]*?)</a>");
+                        Matcher attachmentMatcher = attachmentPattern.matcher(singleHomeworkMatcher.group(3));
+                        while (attachmentMatcher.find()) {
+                            attachments.add(new Attachment(-1, attachmentMatcher.group(2), baseUrl + attachmentMatcher.group(1)));
+                        }
+                    }
+
+                    Homework homework = new Homework(-1,
+                            singleHomeworkMatcher.group(2),
+                            singleHomeworkMatcher.group(hasAttachment ? 4 : 3).replaceAll("</div>", "\n").replaceAll("<div>", "").trim(),
+                            -1, "无", 0, subjectItem);
+                    getHomeworkOtherInfo(singleHomeworkMatcher.group(1), cookie, homework);
+                    saveHomeworkToDatabase(db, homework, subjectItem, attachments);
+                    homeworkListHashMap.put(homework, attachments);
+                    mHomeworkList.add(homework);
+                    homeworkList.add(homework);
+                    dispatcherHomeworkChanged();
+                }
+                subjectItemListHashMap.put(subjectItem, homeworkList);
+                db.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        private static void getHomeworkOtherInfo(String url, String cookie, Homework homework) throws IOException {
+            String html = OkGo.<String>get(baseUrl + url)
+                    .headers("Cookie", cookie)
+                    .execute().body().string();
+            String deadline = null;
+            Pattern deadlinePattern = Pattern.compile("id=\"dueDate\" value=\"(.*?)\"");
+            Matcher deadlineMatcher = deadlinePattern.matcher(html);
+            if (deadlineMatcher.find()) {
+                deadline = deadlineMatcher.group(1);
+                if (!"&nbsp;".equals(deadline)) {
+                    homework.setDeadline(deadline);
+                }
+            }
+            int index = html.indexOf("/webapps/blackboard/execute/attemptExpandListItemGenerator?attempt_id=");
+            if (index == -1) {
+                index = html.indexOf("/webapps/blackboard/execute/groupAttemptExpandListItemGenerator?groupAttempt_id=");
+            }
+            if (index != -1) {
+                homework.setFinished(1); // 标记作业已完成
+                String scoreUrl = html.substring(index, html.indexOf("\"", index));
+                String scoreHtml = OkGo.<String>post(baseUrl + scoreUrl)
+                        .headers("Cookie", cookie)
+                        .params("course_id", homework.getSubjectItem().getCourseId())
+                        .params("filterAttemptHref", "%2Fwebapps%2Fblackboard%2Fexecute%2FgradeAttempt")
+                        .execute().body().string();
+                Pattern scorePattern = Pattern.compile("成绩 :.*?([0-9]+).*");
+                Matcher scoreMatcher = scorePattern.matcher(scoreHtml);
+                if (scoreMatcher.find()) {
+                    homework.setScore(Integer.valueOf(scoreMatcher.group(1).trim()));
+                }
+            }
+        }
     }
 
 }

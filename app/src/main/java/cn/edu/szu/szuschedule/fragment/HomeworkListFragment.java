@@ -49,13 +49,9 @@ public class HomeworkListFragment extends Fragment implements BBService.OnDataCh
 
     @Override
     public void onHomeworkChanged(List<Homework> homeworkList) {
-        for (Homework homework : mHomework) {
-            if (!homeworkList.contains(homework)) {
-                mHomework.remove(homework);
-            }
-        }
+        mHomework.clear();
         for (Homework homework : homeworkList) {
-            if (!homework.isFinished() && !mHomework.contains(homework)) {
+            if (!homework.isFinished()) {
                 mHomework.add(homework);
             }
         }
