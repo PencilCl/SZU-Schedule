@@ -2,12 +2,12 @@ package cn.edu.szu.szuschedule.service;
 
 import android.app.Application;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 
+import android.widget.Toast;
 import cn.edu.szu.szuschedule.Constant;
 import cn.edu.szu.szuschedule.object.*;
 import cn.edu.szu.szuschedule.util.CommonUtil;
@@ -15,10 +15,7 @@ import cn.edu.szu.szuschedule.util.SZUAuthenticationWebViewClient;
 import com.lzy.okgo.OkGo;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,12 +24,10 @@ import com.lzy.okrx2.adapter.ObservableBody;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
-import okhttp3.Response;
 
 /**
  * Created by chenlin on 14/06/2017.
@@ -45,12 +40,14 @@ public class BBService {
     private final static String bbUrl = "http://elearning.szu.edu.cn/webapps/portal/frameset.jsp"; // 成功进入bb的页面
     private final static String stuNumUrl = "http://elearning.szu.edu.cn/webapps/blackboard/execute/editUser?context=self_modify"; // 获取学号url
     private final static String courseUrl = "http://elearning.szu.edu.cn/webapps/portal/execute/tabs/tabAction";
-    
+
+    private static int refreshHomeworkCount = 0;
+    private final static String homeworkCountLock = "homeworkCountLock";
+
     private static WebView webView;
     private static Application mApplication;
 
     private static boolean getttingSubjectItems = false;
-    private static boolean getttingHomework = false;
 
     // 数据区
     private static List<SubjectItem> subjectItems = new ArrayList<>();
@@ -161,10 +158,62 @@ public class BBService {
     }
 
     /**
-     * 刷新作业列表
+     * 刷新所有课程作业列表
      */
-    public static void refreshHomework() {
+    public static void refreshAllHomework() {
+        // 如果当前正在刷新，则直接返回
+        if (isRefreshing()) {
+            Toast.makeText(mApplication, "当前正在获取作业列表", Toast.LENGTH_SHORT).show();
+            return ;
+        }
+        User user = UserService.getCurrentUser();
+        loginBB(user.getAccount(), user.getPassword())
+                .observeOn(Schedulers.io())
+                .subscribe(new Consumer<String>() {
+                    @Override
+                    public void accept(String s) throws Exception {
+                        for (final SubjectItem subjectItem : subjectItems) {
+                            new GetHomeworkFromNetwork(subjectItem).start();
+                        }
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        throwable.printStackTrace();
+                    }
+                });
+    }
 
+    /**
+     * 刷新指定科目的作业列表
+     */
+    public static void refreshHomework(final SubjectItem subjectItem) {
+        // 如果当前正在刷新，则直接返回
+        if (isRefreshing()) {
+            Toast.makeText(mApplication, "当前正在获取作业列表", Toast.LENGTH_SHORT).show();
+            return ;
+        }
+        User user = UserService.getCurrentUser();
+        loginBB(user.getAccount(), user.getPassword())
+                .observeOn(Schedulers.io())
+                .subscribe(new Consumer<String>() {
+                    @Override
+                    public void accept(String s) throws Exception {
+                        new GetHomeworkFromNetwork(subjectItem).start();
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        throwable.printStackTrace();
+                    }
+                });
+    }
+
+    private static boolean isRefreshing() {
+        // 如果当前正在刷新，则直接返回
+        synchronized (homeworkCountLock) {
+            return refreshHomeworkCount != 0;
+        }
     }
 
     /**
@@ -315,7 +364,6 @@ public class BBService {
         }
         db.execSQL("DELETE FROM blackboard WHERE studentID = ?", new String[] {String.valueOf(UserService.getCurrentUser().getId())});
         subjectItems.clear();
-        dispatcherSubjectItemsChanged();
         subjectItemListHashMap.clear();
     }
 
@@ -328,7 +376,7 @@ public class BBService {
         cv.put("subjectName", subjectItem.getSubjectName());
         cv.put("courseNum", subjectItem.getCourseNum());
         cv.put("termNum", subjectItem.getTermNum());
-        cv.put("courseId", subjectItem.getTermNum());
+        cv.put("courseId", subjectItem.getCourseId());
         db.insert("subject", null, cv);
         // 获取最后插入的记录id
         Cursor cursor = db.rawQuery("select last_insert_rowid() from subject", null);
@@ -344,23 +392,21 @@ public class BBService {
     }
 
     /**
-     * 从网络上获取所有课程的作业列表
-     * 并保存到数据库中
-     */
-    private static void getAllHomeworkFromNetwork() {
-        for (final SubjectItem subjectItem : subjectItems) {
-            new GetHomeworkFromNetwork(subjectItem).start();
-        }
-    }
-
-    /**
      * 清除当前用户指定课程的作业信息
      * @param db
      */
     private static void clearHomeworkData(SQLiteDatabase db, SubjectItem subjectItem) {
-        homeworkListHashMap.clear();
-        mHomeworkList.clear();
-        dispatcherHomeworkChanged();
+        Iterator<Homework> iterator = mHomeworkList.iterator();
+        synchronized (iterator) {
+            while (iterator.hasNext()) {
+                Homework homework = iterator.next();
+                if (homework.getSubjectItem() == subjectItem) {
+                    homeworkListHashMap.remove(homework);
+                    iterator.remove();
+                }
+            }
+        }
+
         subjectItemListHashMap.put(subjectItem, new ArrayList<Homework>());
         Cursor cursor = db.rawQuery("SELECT homework.id FROM subjectHomeworkMap INNER JOIN homework ON subjectHomeworkMap.subjectID = ? AND subjectHomeworkMap.homeworkID = homework.id", new String[] {String.valueOf(subjectItem.getId())});
         while (cursor.moveToNext()) {
@@ -522,6 +568,9 @@ public class BBService {
 
         @Override
         public void run() {
+            synchronized (homeworkCountLock) {
+                ++refreshHomeworkCount;
+            }
             String cookie = CookieManager.getInstance().getCookie(baseUrl);
 
             try {
@@ -533,6 +582,10 @@ public class BBService {
                 Matcher matcher = pattern.matcher(html);
                 if (!matcher.find()) {
                     // 找不到网上作业的地址，说明该课程没有作业。直接跳过
+                    synchronized (homeworkCountLock) {
+                        --refreshHomeworkCount;
+                    }
+                    dispatcherHomeworkChanged();
                     return ;
                 }
                 String homeworkUrl = matcher.group(1);
@@ -583,6 +636,10 @@ public class BBService {
                 db.close();
             } catch (Exception e) {
                 e.printStackTrace();
+            }
+
+            synchronized (homeworkCountLock) {
+                --refreshHomeworkCount;
             }
         }
 

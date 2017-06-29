@@ -3,6 +3,7 @@ package cn.edu.szu.szuschedule;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -29,6 +30,8 @@ public class HomeworkListActivity extends AppCompatActivity implements HomeworkA
 
     @Bind(R.id.homeworkList)
     RecyclerView homeworkList;
+    @Bind(R.id.swipeRefreshLayout)
+    SwipeRefreshLayout swipeRefreshLayout;
 
     List<Homework> mHomework = new ArrayList<>();
     HomeworkAdapter homeworkAdapter = new HomeworkAdapter(mHomework);
@@ -39,6 +42,7 @@ public class HomeworkListActivity extends AppCompatActivity implements HomeworkA
         setContentView(R.layout.activity_homework_list);
         ButterKnife.bind(this);
         DisplayUtil.setTranslucentStatus(this);
+
 
         ImageButton button_back = (ImageButton) findViewById(R.id.sub_back);
         button_back.setOnClickListener(new View.OnClickListener() {
@@ -52,6 +56,17 @@ public class HomeworkListActivity extends AppCompatActivity implements HomeworkA
         homeworkList.setLayoutManager(sub_list_layoutManager);
         homeworkList.setAdapter(homeworkAdapter);
         homeworkAdapter.setOnClickListener(this);
+        swipeRefreshLayout.setRefreshing(true);
+
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                mHomework.clear();
+                notifyDataSetChanged();
+                swipeRefreshLayout.setRefreshing(true);
+                BBService.refreshHomework(subjectItem);
+            }
+        });
 
         BBService.addOnDataChangedListener(this);
     }
@@ -74,9 +89,14 @@ public class HomeworkListActivity extends AppCompatActivity implements HomeworkA
                 mHomework.add(homework);
             }
         }
+        notifyDataSetChanged();
+    }
+
+    private void notifyDataSetChanged() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                swipeRefreshLayout.setRefreshing(false);
                 homeworkAdapter.notifyDataSetChanged();
             }
         });
